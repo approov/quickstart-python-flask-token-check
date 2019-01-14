@@ -1,0 +1,103 @@
+#!/bin/bash
+
+set -eu
+
+_USER="$(id -un)"
+
+ARG1=${1:---help}
+
+ARG2=${2:-""}
+
+ARG3=${3:-""}
+
+ARG4=${4:-""}
+
+function Start_New_Browser
+{
+    printf "\n>>> STARTING NEW BROWSER INSTANCE FOR: ${@} <<<\n"
+    sudo docker-compose exec -d server firefox --new-instance "${@}"
+}
+
+function Open_Browser_Tab
+{
+    local _url="${url:?Missing url to open in the browser!}"
+
+    printf "\n>>> OPEN TAB IN BROWSER FOR: ${_url} <<<\n"
+    sudo docker-compose exec -d server firefox "${_url}"
+}
+
+function Run_User_Shell
+{
+    local _user="${1:-1000}"
+    local _shell="${2:-zsh}"
+
+    sudo docker-compose run --rm --service-ports -u "${_user}" server "${_shell}"
+}
+
+
+function Start_User_Shell
+{
+    local _user="${1:-1000}"
+    local _shell="${2:-zsh}"
+
+    sudo docker-compose run --rm --service-ports -u "${_user}" server "${_shell}"
+}
+
+function Execute_User_Shell
+{
+    local _user="${1:-1000}"
+    local _shell="${2:-zsh}"
+
+    sudo docker-compose exec -u "${_user}" server "${_shell}"
+}
+
+function Start_Proxy_Server
+{
+    printf "\n>>> STARTING PROXY SERVER <<<\n"
+    sudo docker-compose exec -d server mitmweb --ignore-hosts ".*auth0.*" --ignore-hosts ".*google.*" --web-iface 0.0.0.0
+    sleep 8
+    Open_Browser_Tab "http://localhost:8081"
+}
+
+function Start_Demo {
+
+    printf "\n---> Starting Postman \n"
+    sudo docker-compose up -d server
+
+    printf "\n---> Starting Node Server \n"
+    sudo docker-compose exec server bash -c "cd /home/node/workspace/server && npm start"
+}
+
+if [ "${ARG1}" == "up" ] && [ "${ARG2}" == "demo" ]
+    then
+        Start_Demo
+        exit 0
+fi
+
+if [ "${ARG1}" == "up" ] && [ "${ARG2}" == "proxy" ]
+    then
+        Start_Proxy_Server
+        exit 0
+fi
+
+if [ "${ARG1}" == "shell" ]
+    then
+        Run_User_Shell "${ARG2}" "${ARG3}"
+        exit 0
+fi
+
+if [ "${ARG1}" == "exec" ] && [ "${ARG2}" == "shell" ]
+    then
+        Execute_User_Shell "${ARG3}" "${ARG4}"
+        exit 0
+fi
+
+
+
+if [ "${ARG1}" == "proxy" ]
+    then
+        Start_Proxy_Server
+        exit 0
+fi
+
+sudo docker-compose "${@}"
