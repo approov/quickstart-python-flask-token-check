@@ -2,7 +2,7 @@
 
 set -eu
 
-_USER="$(id -un)"
+_USER="$(id -u)"
 
 ARG1=${1:---help}
 
@@ -12,92 +12,75 @@ ARG3=${3:-""}
 
 ARG4=${4:-""}
 
-function Start_New_Browser
-{
-    printf "\n>>> STARTING NEW BROWSER INSTANCE FOR: ${@} <<<\n"
-    sudo docker-compose exec -d server firefox --new-instance "${@}"
-}
-
-function Open_Browser_Tab
-{
-    local _url="${url:?Missing url to open in the browser!}"
-
-    printf "\n>>> OPEN TAB IN BROWSER FOR: ${_url} <<<\n"
-    sudo docker-compose exec -d server firefox "${_url}"
-}
-
-function Run_User_Shell
-{
-    local _user="${1:-1000}"
-    local _shell="${2:-zsh}"
-
-    sudo docker-compose run --rm --service-ports -u "${_user}" server "${_shell}"
-}
-
 
 function Start_User_Shell
 {
     local _user="${1:-1000}"
     local _shell="${2:-zsh}"
 
-    sudo docker-compose run --rm --service-ports -u "${_user}" server "${_shell}"
+    Create_Docker_Container ${_shell} ${_user}
 }
 
-function Execute_User_Shell
+function Attach_User_Shell
 {
     local _user="${1:-1000}"
     local _shell="${2:-zsh}"
 
-    sudo docker-compose exec -u "${_user}" server "${_shell}"
+    sudo docker exec \
+        --user "${_user}" \
+        -it \
+        approov-python-flask $_shell
 }
 
-function Start_Proxy_Server
+function Create_Docker_Container
 {
-    printf "\n>>> STARTING PROXY SERVER <<<\n"
-    sudo docker-compose exec -d server mitmweb --ignore-hosts ".*auth0.*" --ignore-hosts ".*google.*" --web-iface 0.0.0.0
-    sleep 8
-    Open_Browser_Tab "http://localhost:8081"
+    local _command="${1:-zsh}"
+    local _user="${2:-1000}"
+    local _server_name="${3:-approov-protected-server}"
+    local _port="${4:-5000}"
+
+    sudo docker run \
+        -it \
+        --rm \
+        --user "${_user}" \
+        --env-file .env \
+        --env "FLASK_APP=server/${_server_name}.py" \
+        --env "HTTP_PORT=${_port}" \
+        --name "python-flask-${_server_name}${_port}" \
+        --publish "127.0.0.1:${_port}:5000" \
+        --workdir "/home/python/workspace" \
+        --volume "$PWD:/home/python/workspace" \
+        approov/python-flask ${_command}
 }
 
-function Start_Demo {
-
-    printf "\n---> Starting Postman \n"
-    sudo docker-compose up -d server
-
-    printf "\n---> Starting Node Server \n"
-    sudo docker-compose exec server bash -c "cd /home/node/workspace/server && npm start"
-}
-
-if [ "${ARG1}" == "up" ] && [ "${ARG2}" == "demo" ]
+if [ "${ARG1}" == "build" ]
     then
-        Start_Demo
+        sudo docker build -t approov/python-flask ./docker
         exit 0
 fi
 
-if [ "${ARG1}" == "up" ] && [ "${ARG2}" == "proxy" ]
+if [ "${ARG1}" == "up" ] && [ "${ARG2}" == "approov-protected-server" ]
     then
-        Start_Proxy_Server
+        Create_Docker_Container "flask run -h 0.0.0.0" "${_USER}" "approov-protected-server" "${ARG3:-5000}"
         exit 0
 fi
 
-if [ "${ARG1}" == "shell" ]
+if [ "${ARG1}" == "up" ] && [ "${ARG2}" == "original-server" ]
     then
-        Run_User_Shell "${ARG2}" "${ARG3}"
+        Create_Docker_Container "flask run -h 0.0.0.0" "${_USER}" "original-server" "${ARG3:-5001}"
         exit 0
 fi
 
-if [ "${ARG1}" == "exec" ] && [ "${ARG2}" == "shell" ]
+if [ "${ARG1}" == "start" ] && [ "${ARG2}" == "shell" ]
     then
-        Execute_User_Shell "${ARG3}" "${ARG4}"
+        Start_User_Shell "${ARG3}" "${ARG4}"
         exit 0
 fi
 
-
-
-if [ "${ARG1}" == "proxy" ]
+if [ "${ARG1}" == "attach" ] && [ "${ARG2}" == "shell" ]
     then
-        Start_Proxy_Server
+        Attach_User_Shell "${ARG3}" "${ARG4}"
         exit 0
 fi
 
-sudo docker-compose "${@}"
+printf "\n---> UNKNOWN COMMAND <---\n\n"

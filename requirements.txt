@@ -11,6 +11,7 @@ keyrings.alt==3.0
 MarkupSafe==1.1.0
 pycparser==2.19
 pycrypto==2.6.1
+PyJWT==1.7.1
 python-dbusmock==0.17.1
 python-dotenv==0.10.1
 pyxdg==0.25
