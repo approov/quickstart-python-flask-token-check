@@ -5,8 +5,10 @@ protection. The protected endpoints differ in the sense that one uses the
 optional custom payload claim in the Approov token.
 
 We will demonstrate how to call each API endpoint with screen-shots from Postman
-and from the shell terminal.
-
+and from the shell terminal. Postman is used here as an easy way to demonstrate
+how you can play with the Approov integration in the API server, but to see a
+real demo of how Approov would work in production you need to request a demo
+[here](https://info.approov.io/demo).
 
 When presenting the screen-shots we will present them as 2 distinct views. The
 Postman view will tell how we performed the request and what response we got
@@ -38,6 +40,31 @@ instructions](https://docs.docker.com/install/) for your platform.
 
 A bash script `./stack` is provided in the root of the demo to make easy to use
 the docker stack to run this demo.
+
+Show the usage help with:
+
+```bash
+$ ./stack --help
+
+DOCKER STACK CLI WRAPPER
+
+This bash script is a wrapper around docker for easier use of the docker stack
+in this project.
+
+Usage:
+    ./stack [-h | --help]
+    ./stack <args>
+
+
+Arguments:
+    build        Builds the docker image for this stack.
+    up <server>  Runs the given server: approov-protected-server, original-server.
+    start shell  Starts a shell in a new container.
+
+Options:
+    -h | --help  Shows this help.
+
+```
 
 #### Building the docker image:
 
@@ -109,6 +136,13 @@ Open Postman and import [this collection](https://gitlab.com/snippets/1799104/ra
 that contains all the API endpoints prepared with all scenarios we want to
 demonstrate.
 
+The Approov tokens used in Postman during this demo have been generated manually
+with [this script](./bin/generate-token.py) and you can see some examples of
+using it [here](../README.md#how-to-use-the-postman-collection). Feel free to
+play around with the script to generate different `approov-token` headers to be
+used in the Postman requests.
+
+
 ### Starting the Python Flask Server
 
 To start the server we want to issue the command:
@@ -154,19 +188,20 @@ logs output from the shell view.
 ### Endpoints Protected by an Approov Token
 
 This endpoint requires a `approov-token` header and depending on the boolean
-value for the environment variable `APPROOV_ENABLED` we will have 2 distinct
-behaviours. When being set to `true` we refuse to fulfil the request and when
-set to `false` we will let the request pass through. For both behaviours we
-always log the result of checking the Approov token and any exception that may
-occur during the process.
+value for the environment variable `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` we will
+have 2 distinct behaviours. When being set to `true` we refuse to fulfil the
+request and when set to `false` we will let the request pass through. For both
+behaviours we log the result of checking the Approov token id the environment
+variable `APPROOV_LOGGING_ENABLED` is set to `true`.
 
-The default behaviour is to have `APPROOV_ENABLED` set to `true`, but you may
-feel more comfortable to have it setted to `false` during the initial deployment,
-until you are confident that you are only refusing bad requests to your API server.
+The default behaviour is to have `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to
+`true`, but you may feel more comfortable to have it setted to `false` during
+the initial deployment, until you are confident that you are only refusing bad
+requests to your API server.
 
 #### /shapes - missing the Approov token header
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `true`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -194,7 +229,7 @@ returned to Postman.
 
 **Let's see the same request with Approov disabled**
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `false`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `false`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -226,7 +261,7 @@ can see a log entry for the `/shapes` endpoint response with the status code
 
 #### /shapes - Invalid Approov token header
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `true`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -257,7 +292,7 @@ that doesn't contain enough segments.
 
 **Let's see the same request with Approov disabled**
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `false`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `false`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -287,7 +322,7 @@ validation failure and we can confirm the `200` response as Postman shows.
 
 #### /shapes - Valid Approov token header
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `true`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -301,18 +336,7 @@ flask run -h 0.0.0.0
 > in a very distant future for this call "Approov Token with valid signature and
 > expire time". For the call "Expired Approov Token with valid signature" an
 > expired token is also included.
->
 
-Feel free to generate your own fake tokens by tweaking
-[this script](./server/test/helpers/generate-token.py) as needed and invoking
-it like:
-
-```bash
-python3 server/test/helpers/generate-token.py
-
-# or like:
-python test/helpers/generate-token.js --expires-in 1m
-```
 
 **Postman view with token correctly signed and not expired token:**
 
@@ -341,7 +365,7 @@ log messages in the shell view.
 
 **Let's see the same request with Approov disabled**
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `false`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `false`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -375,45 +399,15 @@ expired.
 
 ### Endpoints Protected by an Approov Token with Custom Payload Claim
 
-A custom payload claim in an Approov token is a base64 encoded hash of some
-unique identifier we may want to to tie with the Approov token, like an OAUTH2
-token, but you are free to use what so ever you may want.
+A custom payload claim is optional in any Approov token and you can read more
+about in [here](./../README.md#approov-validation-process).
 
-JWT dummy example for the payload part:
-
-```json
-{
-    "iss":"custom",
-    "pay":"f3U2fniBJVE04Tdecj0d6orV9qT9t52TjfHxdUqDBgY="
-}
-```
-
-> **NOTE**
->
-> Just to be sure that we are on the same page, a JWT token have 3 parts, that
-> are separated by dots and represented as a string in the format of
-> `header.payload.signature`, thus the above section is an example for the
-> middle part, the `payload` one.
-
-The custom payload claim in an Approov token is the one in the `pay` key:
-
-```
-"pay":"f3U2fniBJVE04Tdecj0d6orV9qT9t52TjfHxdUqDBgY="
-```
-
-**ALERT**:
-
-Please bear in mind that the custom payload claim is not meant to pass
-application data to the API server, but you can pass a base64 encoded hash of
-the data you want to send from the mobile app into the API server and have it
-hashing the data that was sent as usual on the request and compare it with the
-custom payload claim base64 hash to confirm that the integrity of the data was
-not compromised.
-
+For the requests where the custom payload claim is checked we will only reject
+them if the environment variable `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` is set to `true`.
 
 #### /forms - Invalid Custom Payload Claim in the Approov token
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `true`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -440,7 +434,7 @@ response was returned.
 
 **Let's see the same request with Approov disabled**
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `false`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `false`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -467,7 +461,7 @@ response instead of the `400` one when Approov is enabled.
 
 #### /forms - Valid Custom Payload Claim in the Approov token
 
-Make sure that the `.env` file contains `APPROOV_ENABLED` set to `true`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 

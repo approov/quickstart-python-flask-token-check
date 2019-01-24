@@ -18,14 +18,22 @@ log = logging.getLogger(__name__)
 load_dotenv(find_dotenv(), override=True)
 
 HTTP_PORT = int(getenv('HTTP_PORT', 5000))
-
-APPROOV_ENABLED = True
-_approov_enabled = getenv('APPROOV_ENABLED', 'True').lower()
-
-if _approov_enabled == 'false':
-    APPROOV_ENABLED = False
-
 APPROOV_BASE64_SECRET = getenv('APPROOV_BASE64_SECRET')
+
+APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN = True
+_approov_enabled = getenv('APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN', 'True').lower()
+if _approov_enabled == 'false':
+    APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN = False
+
+APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM = True
+_abort_on_invalid_claim = getenv('APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM', 'True').lower()
+if _abort_on_invalid_claim == 'false':
+    APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM = False
+
+APPROOV_LOGGING_ENABLED = True
+_approov_logging_enabled = getenv('APPROOV_LOGGING_ENABLED', 'True').lower()
+if _approov_logging_enabled == 'false':
+    APPROOV_LOGGING_ENABLED = False
 
 def _getHeader(key, default_value = None):
     return request.headers.get(key, default_value)
@@ -34,30 +42,28 @@ def _isEmpty(token):
     return token is None or token == ""
 
 def _logApproov(message):
-    if APPROOV_ENABLED:
-        log.error('APPROOV ENABLED | %s', message)
-    else:
-        log.info('APPROOV DISABLED | %s', message)
+    if APPROOV_LOGGING_ENABLED is True:
+        log.info(message)
 
-def _decodeApproovToken(approov_token, approov_base64_secret):
+def _decodeApproovToken(approov_token):
     try:
         # Decode the approov token, allowing only the HS256 algorithm and using
         # the approov base64 encoded SECRET
-        approov_token_decoded = jwt.decode(approov_token, b64decode(approov_base64_secret), algorithms=['HS256'])
+        approov_token_decoded = jwt.decode(approov_token, b64decode(APPROOV_BASE64_SECRET), algorithms=['HS256'])
 
         return approov_token_decoded
 
     except jwt.InvalidSignatureError as e:
-        _logApproov('JWT TOKEN INVALID SIGNATURE: %s' % e)
+        _logApproov('APPROOV JWT TOKEN INVALID SIGNATURE: %s' % e)
         return None
     except jwt.ExpiredSignatureError as e:
-        _logApproov('JWT TOKEN EXPIRED: %s' % e)
+        _logApproov('APPROOV JWT TOKEN EXPIRED: %s' % e)
         return None
     except jwt.InvalidTokenError as e:
-        _logApproov('JWT TOKEN INVALID: %s' % e)
+        _logApproov('APPROOV JWT TOKEN INVALID: %s' % e)
         return None
 
-def _isValidPayloadInApproovToken(approov_token_decoded, custom_payload_claim):
+def _checkApproovCustomPayloadClaim(approov_token_decoded, claim_value):
     if _isEmpty(approov_token_decoded):
         return False
 
@@ -66,7 +72,7 @@ def _isValidPayloadInApproovToken(approov_token_decoded, custom_payload_claim):
 
         # we need to hash and base64 encode the oauth2 token in order to verify
         # it matches the same one contained in the approov token payload.
-        payload_claim_hash = sha256(custom_payload_claim.encode('utf-8')).digest()
+        payload_claim_hash = sha256(claim_value.encode('utf-8')).digest()
         payload_claim_base64_hash = b64encode(payload_claim_hash).decode('utf-8')
 
         return approov_token_decoded['pay'] == payload_claim_base64_hash
@@ -75,38 +81,48 @@ def _isValidPayloadInApproovToken(approov_token_decoded, custom_payload_claim):
     # payload claim, thus we always need to have a pass when is not present.
     return True
 
-def _abortApproovProtectedRequest(message):
-    _logApproov(message)
 
-    if APPROOV_ENABLED:
-        abort(make_response(jsonify({}), 400))
-
-def _checkApproovToken():
+def _getApproovToken():
     approov_token = _getHeader('approov-token')
 
     if _isEmpty(approov_token):
-        _abortApproovProtectedRequest('APPROOV TOKEN EMPTY')
-        return ''
+        _logApproov('APPROOV TOKEN HEADER IS EMPTY')
+        return None
 
-    approov_token_decoded = _decodeApproovToken(approov_token, APPROOV_BASE64_SECRET)
+    approov_token_decoded = _decodeApproovToken(approov_token)
 
     if _isEmpty(approov_token_decoded):
-        _abortApproovProtectedRequest('FAILED TO DECODE APPROOV TOKEN')
+        return None
 
     return approov_token_decoded
 
-def _checkApproovTokenWithCustomPayloadClaim(custom_payload_claim):
+def _handleApproovProtectedRequest(approov_token_decoded):
 
-    approov_token_decoded = _checkApproovToken()
+    message = 'REQUEST WITH VALID APPROOV TOKEN'
 
-    # We will check that the OAUTH2 Token included by the mobile app in the
-    # Approov Token payload is the same that was sent in the header of the request.
-    #
-    # On failure it means the request was tampered with, therefore is rejected.
-    if not _isValidPayloadInApproovToken(approov_token_decoded, custom_payload_claim):
-        _abortApproovProtectedRequest('APPROOV TOKEN WITH INVALID PAYLOAD')
+    if not approov_token_decoded:
+        message = 'REQUEST WITH INVALID APPROOV TOKEN'
 
-    return approov_token_decoded
+    if APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is True and not approov_token_decoded:
+        _logApproov('REJECTED ' + message)
+        abort(make_response(jsonify({}), 400))
+
+    _logApproov('ACCETPED ' + message)
+
+def _handleApproovCustomPayloadClaim(approov_token_decoded, claim_value):
+
+    message = 'REQUEST WITH VALID CUSTOM PAYLOAD CLAIM IN THE APPROOV TOKEN'
+
+    valid_claim = _checkApproovCustomPayloadClaim(approov_token_decoded, claim_value)
+
+    if not valid_claim:
+        message = 'REQUEST WITH INVALID CUSTOM PAYLOAD CLAIM IN THE APPROOV TOKEN'
+
+    if APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is True:
+        _logApproov('REJECTED ' + message)
+        abort(make_response(jsonify({}), 400))
+
+    _logApproov('ACCETPED ' + message)
 
 @api.route("/")
 def endpoints():
@@ -123,8 +139,13 @@ def hello():
 @api.route("/shapes")
 def shapes():
 
-    # checkd if the Approov token is valid and aborts the request if not.
-    _checkApproovToken()
+    # Will get the Approov JWT token from the header, decode it and on success
+    # will return it, otherwise None is returned.
+    approov_token_decoded = _getApproovToken()
+
+    # If APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is set to True it will abort the request
+    # when the decoded approov token is empty.
+    _handleApproovProtectedRequest(approov_token_decoded)
 
     shape = choice([
         "Circle",
@@ -144,9 +165,17 @@ def forms():
         log.error('OAUTH2 TOKEN EMPTY')
         abort(make_response(jsonify({}), 403))
 
-    # check if the Approov token and the custom payload claim(the ouath2 token)
-    # are valid and aborts the request if not.
-    _checkApproovTokenWithCustomPayloadClaim(oauth2_token)
+    # Will get the Approov JWT token from the header, decode it and on success
+    # will return it, otherwise None is returned.
+    approov_token_decoded = _getApproovToken()
+
+    # If APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is set to True it will abort the request
+    # when the decoded approov token is empty.
+    _handleApproovProtectedRequest(approov_token_decoded)
+
+    # check if the custom payload claim in the approov token is valid and aborts
+    # the request if APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is set to True.
+    _handleApproovCustomPayloadClaim(approov_token_decoded, oauth2_token)
 
     # Now we can handle OAUTH2 as we usually would do in a Python Flask API.
     # Maybe like in https://auth0.com/docs/quickstart/webapp/python/

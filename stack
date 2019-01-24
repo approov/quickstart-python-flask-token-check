@@ -12,6 +12,10 @@ ARG3=${3:-""}
 
 ARG4=${4:-""}
 
+function Show_Help
+{
+    echo && cat ./docker/usage-help.txt && echo
+}
 
 function Start_User_Shell
 {
@@ -19,17 +23,6 @@ function Start_User_Shell
     local _shell="${2:-zsh}"
 
     Create_Docker_Container ${_shell} ${_user}
-}
-
-function Attach_User_Shell
-{
-    local _user="${1:-1000}"
-    local _shell="${2:-zsh}"
-
-    sudo docker exec \
-        --user "${_user}" \
-        -it \
-        approov-python-flask $_shell
 }
 
 function Create_Docker_Container
@@ -52,6 +45,12 @@ function Create_Docker_Container
         --volume "$PWD:/home/python/workspace" \
         approov/python-flask ${_command}
 }
+
+if [ "${ARG1}" == "-h" ] || [ "${ARG1}" == "--help" ]
+    then
+        Show_Help
+        exit 0
+fi
 
 if [ "${ARG1}" == "build" ]
     then
@@ -77,10 +76,5 @@ if [ "${ARG1}" == "start" ] && [ "${ARG2}" == "shell" ]
         exit 0
 fi
 
-if [ "${ARG1}" == "attach" ] && [ "${ARG2}" == "shell" ]
-    then
-        Attach_User_Shell "${ARG3}" "${ARG4}"
-        exit 0
-fi
 
-printf "\n---> UNKNOWN COMMAND <---\n\n"
+Show_Help

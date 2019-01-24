@@ -61,7 +61,8 @@ USER ${CONTAINER_USER}
 RUN pip3 install \
       flask \
       pyjwt \
-      python-dotenv
+      python-dotenv \
+      docopt
 
 # pip install will put the executables under ~/.local/bin
 ENV PATH=/home/"${CONTAINER_USER}"/.local/bin:$PATH
