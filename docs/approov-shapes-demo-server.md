@@ -115,19 +115,28 @@ logged, if debug is enabled.
 
 ### The logs
 
-When issuing a request from Postman you can see the logs being printed to your
-shell terminal and you can search them for `APPROOV ENABLED | error level message here`
-or by `APPROOV ENABLED | info level message here` to compare the logged messages
-with results returned to Postman, regarding failure or success in the validation
-of the requests protected by Approov.
+When a request is issued from Postman you can see the logs being printed to your
+shell terminal and you can search for `INFO:approov-protected-server:` to see
+all log entries about requests protected by Approov and compare the logged
+messages with the results returned to Postman for failures or success in
+the validation of requests protected by Approov.
 
-An example of the logs output:
+An example for an accepted request:
 
 ```bash
-INFO:approov-protected-server:APPROOV DISABLED | APPROOV TOKEN EMPTY
-INFO:approov-protected-server:APPROOV DISABLED | JWT TOKEN INVALID: Invalid token type. Token must be a <class 'bytes'>
-INFO:approov-protected-server:APPROOV DISABLED | FAILED TO DECODE APPROOV TOKEN
-172.17.0.1 - - [21/Jan/2019 13:31:57] "GET /shapes HTTP/1.1" 200 -
+INFO:approov-protected-server:ACCEPTED REQUEST WITH VALID APPROOV TOKEN
+INFO:approov-protected-server:ACCEPTED REQUEST WITH VALID CUSTOM PAYLOAD CLAIM IN THE APPROOV TOKEN
+172.17.0.1 - - [25/Jan/2019 16:25:45] "GET /forms HTTP/1.1" 200 -
+INFO:werkzeug:172.17.0.1 - - [25/Jan/2019 16:25:45] "GET /forms HTTP/1.1" 200 -
+```
+
+Example for a rejected request:
+
+```
+INFO:approov-protected-server:ACCEPTED REQUEST WITH VALID APPROOV TOKEN
+INFO:approov-protected-server:REJECTED REQUEST WITH INVALID CUSTOM PAYLOAD CLAIM IN THE APPROOV TOKEN
+172.17.0.1 - - [25/Jan/2019 16:25:51] "GET /forms HTTP/1.1" 400 -
+INFO:werkzeug:172.17.0.1 - - [25/Jan/2019 16:25:51] "GET /forms HTTP/1.1" 400 -
 ```
 
 ### Starting Postman
@@ -137,10 +146,52 @@ that contains all the API endpoints prepared with all scenarios we want to
 demonstrate.
 
 The Approov tokens used in Postman during this demo have been generated manually
-with [this script](./bin/generate-token.py) and you can see some examples of
-using it [here](../README.md#how-to-use-the-postman-collection). Feel free to
-play around with the script to generate different `approov-token` headers to be
-used in the Postman requests.
+with [this script](./bin/generate-token.py). Feel free to play around with the
+script to generate different `approov-token` headers to be used in the Postman
+requests.
+
+
+### Approov Tokens Generation
+
+The script to generate the Approov tokens used in the Postman collection is very
+easy to use.
+
+To show the usage help:
+
+```bash
+$ ./bin/generate-token.py --help
+GENERATE APPROOV TOKEN CLI
+
+Usage:
+    generate-token.py
+    generate-token.py [--expire EXPIRE] [--claim CLAIM] [--claim-example] [--secret SECRET]
+
+Options:
+    --expire EXPIRE  The Approov token expire time in minutes [default: 5].
+    --claim CLAIM    The base64 encode sha256 hash of the custom payload claim for the Approov token.
+    --claim-example  Same as --claim but using an hard-coded claim example.
+    --secret SECRET  The base64 encoded secret downloaded from the Approov portal.
+    -h --help        Show this screen.
+    -v --version     Show version.
+```
+
+With default 5 minutes expire time and without a custom payload claim:
+
+```bash
+$ ./bin/generate-token.py
+Token:
+ eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NDgzMzk3ODIuNzA5MTc1MywiaXNzIjoiZmFpbG92ZXIifQ.FsDRfmF527uiPdSh00aFJUvR2zm6gC69tqHQ9tV8mZo
+```
+
+With custom expire time and the built-in custom claim example:
+
+```bash
+./bin/generate-token.py --expire 10 --claim-example
+Token:
+ eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NDgzMzk4MzcuODQyMzM3NiwiaXNzIjoiZmFpbG92ZXIiLCJwYXkiOiJrR1J3bmFiUEtUNHU5WURWRW9Pb3pJMzUvdElrK2toQkptY0ljUzU0MzJvPSJ9._146uyXOKEZxgIK8j6Yzgk0U5y6zwo5i5VtZd6imr2Y
+```
+
+Feel free to try all the options...
 
 
 ### Starting the Python Flask Server
@@ -156,7 +207,7 @@ flask run -h 0.0.0.0
 > to expose the server outside of the container network, once by default it runs
 > on `127.0.0.1`, that is only accessible from inside the container network.
 >
-> So in your computer you are free to just use `flask run -h 0.0.0.0` instead of
+> So in your computer you are free to just use `flask run` instead of
 > `flask run -h 0.0.0.0`.
 
 ### Endpoint Not Protected by Approov
@@ -254,9 +305,9 @@ We continue to not provide the `approov-token` header but this time we have a
 request is not denied.
 
 Looking into the shell view we can see that the logs continue to tell us that
-the JWT token is empty, this time with the log level set to `INFO`, but now we
-can see a log entry for the `/shapes` endpoint response with the status code
-`200`, meaning that the request was fulfilled and a successful response sent back.
+the JWT token is empty, but now we can see a log entry for the `/shapes`
+endpoint response with the status code `200`, meaning that the request was
+fulfilled and a successful response sent back.
 
 
 #### /shapes - Invalid Approov token header
@@ -383,7 +434,8 @@ flask run -h 0.0.0.0
 **Shell view:**
 
 ![Shell - shapes endpoint with a valid, with an expired Approov token and Approov disabled](./assets/img/shell-shapes-approov-disabled-with-valid-and-expired-token.png)
-
+> Can you spot where is the difference between this shell view and the previous
+> one?
 
 **Request Overview:**
 
@@ -395,19 +447,24 @@ interval between them but this time we got both of them with `200` responses.
 
 If we look into the shell view we can see that the first request have
 a valid token and in the second request the token is not valid because is
-expired.
+expired, but once Approov is disabled the request is accepted.
 
 ### Endpoints Protected by an Approov Token with Custom Payload Claim
 
-A custom payload claim is optional in any Approov token and you can read more
-about in [here](./../README.md#approov-validation-process).
+A custom payload claim is optional in any Approov token and you can read
+more about them [here](./../README.md#approov-validation-process).
 
-For the requests where the custom payload claim is checked we will only reject
-them if the environment variable `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` is set to `true`.
+The requests where the custom payload claim is checked will be rejected on
+failure but only if the environment variable
+`APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` is set to `true`. To
+bear in mind that before this check is done the request have already been
+through the same flow we have described for the `/shapes` endpoint.
+
 
 #### /forms - Invalid Custom Payload Claim in the Approov token
 
-Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `true`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN`
+and `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -428,13 +485,23 @@ flask run -h 0.0.0.0
 In Postman we added an Approov token with a custom payload claim not matching
 the OAUTH2 token, thus the API server rejects the request with a `400` response.
 
-The shell view logs entries confirms the custom payload claim is not the expect
-one with the message `APPROOV TOKEN WITH INVALID PAYLOAD` and that a `400`
-response was returned.
+While we can see in the shell view that the request is accepted for the Approov
+token itself it rejects the request afterwards due to an invalid custom payload
+contained in the Approov token, thus returning a `400` response.
+
+> **IMPORTANT**:
+>
+> When decoding the Approov token we only check if the signature and expiration
+> time are valid, nothing else within the token is checked.
+>
+> The custom payload claim check works on the decoded Approov token to validate
+> if the claim included in the payload key `pay` is the expected one.
+
 
 **Let's see the same request with Approov disabled**
 
-Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `false`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN`
+and `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` set to `false`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -455,13 +522,15 @@ flask run -h 0.0.0.0
 We still have the invalid custom payload claim in the Approov token but once we
 have disabled Approov we now have a `200` response.
 
-In the shell view we can confirm that with the log message `APPROOV DISABLED | APPROOV TOKEN WITH INVALID PAYLOAD` and also see that it was logged a `200`
-response instead of the `400` one when Approov is enabled.
+In the shell view we can confirm that the log entry still reflects that the
+custom payload claim is invalid, but this time a `200` response is logged
+instead of the previously `400` one, and this is because Approov is now disabled.
 
 
 #### /forms - Valid Custom Payload Claim in the Approov token
 
-Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN` set to `true`.
+Make sure that the `.env` file contains `APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN`
+and `APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM` set to `true`.
 
 Cancel current server session with `ctrl+c` and start it again with:
 
@@ -479,9 +548,9 @@ flask run -h 0.0.0.0
 
 **Request Overview:**
 
-In Postman the Approov token header contains a valid custom payload claim, thus
-when we perform the request the API server doesn't reject it and a `200`
-response is sent back.
+In the Postman view the Approov token header contains a valid custom payload
+claim, thus when we perform the request the API server doesn't reject it and a
+`200` response is sent back.
 
-The shell view doesn't show any Approov validation errors and we can see the log
-entry confirming the `200` response.
+The shell view confirms us that the custom payload claim is valid and we can
+also see the log entry confirming the `200` response.

@@ -39,7 +39,7 @@ function Create_Docker_Container
         --env-file .env \
         --env "FLASK_APP=server/${_server_name}.py" \
         --env "HTTP_PORT=${_port}" \
-        --name "python-flask-${_server_name}${_port}" \
+        --name "python-flask-${_server_name}-port-${_port}" \
         --publish "127.0.0.1:${_port}:5000" \
         --workdir "/home/python/workspace" \
         --volume "$PWD:/home/python/workspace" \

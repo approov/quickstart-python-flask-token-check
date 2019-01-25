@@ -1,9 +1,9 @@
 # System packages
 import logging
+from random import choice
 from base64 import b64decode, b64encode
 from os import getenv
 from hashlib import sha256
-from random import choice
 
 # Third part packages
 import jwt
@@ -63,25 +63,6 @@ def _decodeApproovToken(approov_token):
         _logApproov('APPROOV JWT TOKEN INVALID: %s' % e)
         return None
 
-def _checkApproovCustomPayloadClaim(approov_token_decoded, claim_value):
-    if _isEmpty(approov_token_decoded):
-        return False
-
-    # checking if the approov token contains a payload and verify it.
-    if 'pay' in approov_token_decoded:
-
-        # we need to hash and base64 encode the oauth2 token in order to verify
-        # it matches the same one contained in the approov token payload.
-        payload_claim_hash = sha256(claim_value.encode('utf-8')).digest()
-        payload_claim_base64_hash = b64encode(payload_claim_hash).decode('utf-8')
-
-        return approov_token_decoded['pay'] == payload_claim_base64_hash
-
-    # The Approov failover running in the Google cloud doesn't return the custom
-    # payload claim, thus we always need to have a pass when is not present.
-    return True
-
-
 def _getApproovToken():
     approov_token = _getHeader('approov-token')
 
@@ -107,7 +88,25 @@ def _handleApproovProtectedRequest(approov_token_decoded):
         _logApproov('REJECTED ' + message)
         abort(make_response(jsonify({}), 400))
 
-    _logApproov('ACCETPED ' + message)
+    _logApproov('ACCEPTED ' + message)
+
+def _checkApproovCustomPayloadClaim(approov_token_decoded, claim_value):
+    if _isEmpty(approov_token_decoded):
+        return False
+
+    # checking if the approov token contains a payload and verify it.
+    if 'pay' in approov_token_decoded:
+
+        # we need to hash and base64 encode the oauth2 token in order to verify
+        # it matches the same one contained in the approov token payload.
+        payload_claim_hash = sha256(claim_value.encode('utf-8')).digest()
+        payload_claim_base64_hash = b64encode(payload_claim_hash).decode('utf-8')
+
+        return approov_token_decoded['pay'] == payload_claim_base64_hash
+
+    # The Approov failover running in the Google cloud doesn't return the custom
+    # payload claim, thus we always need to have a pass when is not present.
+    return True
 
 def _handleApproovCustomPayloadClaim(approov_token_decoded, claim_value):
 
@@ -118,11 +117,11 @@ def _handleApproovCustomPayloadClaim(approov_token_decoded, claim_value):
     if not valid_claim:
         message = 'REQUEST WITH INVALID CUSTOM PAYLOAD CLAIM IN THE APPROOV TOKEN'
 
-    if APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is True:
+    if not valid_claim and APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is True:
         _logApproov('REJECTED ' + message)
         abort(make_response(jsonify({}), 400))
 
-    _logApproov('ACCETPED ' + message)
+    _logApproov('ACCEPTED ' + message)
 
 @api.route("/")
 def endpoints():
