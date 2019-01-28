@@ -46,7 +46,7 @@ def generateToken(approov_base64_secret, token_expire_in_minutes, custom_payload
     if not approov_base64_secret:
         raise ValueError('Approov base64 encoded secret is missing.')
 
-    if token_expire_in_minutes:
+    if not token_expire_in_minutes:
         token_expire_in_minutes = 5
 
     payload = {
@@ -73,11 +73,11 @@ def main():
     if not custom_payload_claim and arguments['--claim-example'] is True:
         custom_payload_claim = CUSTOM_PAYLOAD_CLAIM_SHA256_HASH_BASE64_ENCODED
 
-    if not arguments['--secret'] == None:
+    if arguments['--secret']:
         approov_base64_secret = arguments['--secret']
 
     if not approov_base64_secret:
-        raise ValueError('--secret was provided as an empty string in the CLI.')
+        raise ValueError('--secret was provided as an empty string in the CLI or in the .env file.')
 
     token = generateToken(approov_base64_secret, token_expire_in_minutes, custom_payload_claim)
 
