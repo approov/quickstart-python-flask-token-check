@@ -31,14 +31,13 @@ from jwt import encode
 from docopt import docopt
 
 # to base64 encode the custom payload claim hash: http://tomeko.net/online_tools/hex_to_base64.php
-#CUSTOM_PAYLOAD_CLAIM_SHA256_HASH_BASE64_ENCODED = 'invalid-oauth2-base64-encoded-hash=='
-CUSTOM_PAYLOAD_CLAIM_SHA256_HASH_BASE64_ENCODED = 'f3U2fniBJVE04Tdecj0d6orV9qT9t52TjfHxdUqDBgY='
+REQUEST_CLAIM_RAW_VALUE_EXAMPLE = 'claim-value-to-be-sha256-hashed-and-base64-encoded'
 
 def _generateSha256HashBase64Encoded(value):
     value_hash = sha256(value.encode('utf-8')).digest()
     return b64encode(value_hash).decode('utf-8')
 
-def generateToken(approov_base64_secret, token_expire_in_minutes, custom_payload_claim):
+def generateToken(approov_base64_secret, token_expire_in_minutes, request_claim_raw_value):
     """Generates a token with a 5 minutes lifetime. Optionally we can set also a custom payload claim."""
 
     approov_base64_secret = approov_base64_secret.strip()
@@ -51,11 +50,10 @@ def generateToken(approov_base64_secret, token_expire_in_minutes, custom_payload
 
     payload = {
         'exp': time() + (60 * token_expire_in_minutes), # required - the timestamp for when the token expires.
-        'iss': 'failover', # optional - only included in tokens from the failover; the value is always “failover”.
     }
 
-    if custom_payload_claim:
-        payload['pay'] = _generateSha256HashBase64Encoded(custom_payload_claim)
+    if request_claim_raw_value:
+        payload['pay'] = _generateSha256HashBase64Encoded(request_claim_raw_value)
 
     return encode(payload, b64decode(approov_base64_secret), algorithm='HS256').decode()
 
@@ -63,15 +61,15 @@ def main():
 
     arguments = docopt(__doc__, version='GENERATE APPROOV TOKEN CLI - 1.0')
 
-    custom_payload_claim = None
+    request_claim_raw_value = None
     token_expire_in_minutes = int(arguments['--expire'])
     approov_base64_secret = getenv("APPROOV_BASE64_SECRET")
 
     if arguments['--claim']:
-        custom_payload_claim = arguments['--claim']
+        request_claim_raw_value = arguments['--claim']
 
-    if not custom_payload_claim and arguments['--claim-example'] is True:
-        custom_payload_claim = CUSTOM_PAYLOAD_CLAIM_SHA256_HASH_BASE64_ENCODED
+    if not request_claim_raw_value and arguments['--claim-example'] is True:
+        request_claim_raw_value = REQUEST_CLAIM_RAW_VALUE_EXAMPLE
 
     if arguments['--secret']:
         approov_base64_secret = arguments['--secret']
@@ -79,7 +77,7 @@ def main():
     if not approov_base64_secret:
         raise ValueError('--secret was provided as an empty string in the CLI or in the .env file.')
 
-    token = generateToken(approov_base64_secret, token_expire_in_minutes, custom_payload_claim)
+    token = generateToken(approov_base64_secret, token_expire_in_minutes, request_claim_raw_value)
 
     print('Token:\n', token)
 

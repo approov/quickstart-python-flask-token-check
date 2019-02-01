@@ -51,25 +51,49 @@ DOCKER STACK CLI WRAPPER
 This bash script is a wrapper around docker for easier use of the docker stack
 in this project.
 
+Signature:
+  ./stack [options] <command> <args>
+
+
 Usage:
-    ./stack [-h | --help]
-    ./stack <args>
+  ./stack
+  ./stack [-h | --help] [-p | --port] [-u | --user] <command> <args>
 
-
-Arguments:
-    build        Builds the docker image for this stack.
-    up <server>  Runs the given server: approov-protected-server, original-server.
-    start shell  Starts a shell in a new container.
 
 Options:
-    -h | --help  Shows this help.
+  -h | --help  Shows this help.
+  -p | --port  The host port to access the docker container.
+  -u | --user  Run the docker container under the given user name or uid.
+
+
+Commands/Args:
+  build                     Builds the docker image for this stack:
+                              ./stack build
+
+  approov-protected-server  Runs the approov server:
+                              ./stack approov-server
+                              ./stack --port 5000 approov-server
+
+  original-server           Runs the original server:
+                              ./stack original-server
+                              ./stack --port 5001 original-server
+
+  stop <server>             Stops the docker container for the given server:
+                              ./stack stop approov-protected-server
+                              ./stack stop --port 5001 original-server
+
+  shell <name> <server>     Starts a shell in a new container:
+                              ./stack shell
+                              ./stack shell zsh
+                              ./stack --port 5001 shell zsh original-server
+                              ./stack --user 0 --port 5002 bash original-server
 
 ```
 
 #### Building the docker image:
 
 ```bash
-./stack build server
+./stack build
 ```
 > The image will contain the Python Flask Approov Shapes Demo Server with the
 > dependencies already installed.
@@ -77,7 +101,7 @@ Options:
 #### Getting a shell terminal inside the docker container:
 
 ```bash
-./stack start shell
+./stack shell
 ```
 > If you choose to continue following this demo using Docker, then all subsequent
   shell commands must be executed from this shell terminal.

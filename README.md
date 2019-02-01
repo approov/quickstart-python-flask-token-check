@@ -46,7 +46,6 @@ Dummy example for the JWT token middle part, the payload:
 ```
 {
     "exp": 123456789, # required - the timestamp for when the token expires.
-    "iss":"failover", # optional - only included in tokens from the failover; the value is always “failover”.
     "pay":"f3U2fniBJVE04Tdecj0d6orV9qT9t52TjfHxdUqDBgY=" # optional - a sha256 hash of the claim, encoded with base64.
 }
 ```
@@ -125,7 +124,7 @@ pip3 install pyjwt python-dotenv docopt
 
 Let's use the [original-server.py](./server/original-server.py) as an example
 for a current server where we want to add Approov to protect some or all the
-endpoints and we will add to it only the necessary code to integrate Approov and
+endpoints and after we add only the necessary code to integrate Approov,
 the end result can be seen in the [approov-protected-server.py](./server/approov-protected-server.py).
 
 
@@ -183,6 +182,7 @@ starting point.
 The `.env` file must contain this four variables:
 
 ```env
+# the base64 encode is for value: approov-base64-encoded-secret
 APPROOV_BASE64_SECRET=YXBwcm9vdi1iYXNlNjQtZW5jb2RlZC1zZWNyZXQ=
 APPROOV_LOGGING_ENABLED=true
 APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN=true
