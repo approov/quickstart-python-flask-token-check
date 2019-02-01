@@ -117,7 +117,7 @@ If not already using the packages `pyjwt` and `python-dotenv` in your Python
 Flask API project, please add them:
 
 ```bash
-pip3 install pyjwt python-dotenv docopt
+pip3 install pyjwt python-dotenv
 ```
 
 ## ORIGINAL SERVER
@@ -137,7 +137,7 @@ how to configure the server.
 In order to be able to check the Approov token the `PyJWT` library needs
 to know the secret used by the Approov cloud service to sign it. A secure way to
 do this is by passing it as an environment variable, as it can be seen
-[here](./server/approov-protected-server.py#L26).
+[here](./server/approov-protected-server.py#L21).
 
 Next we need to define two core methods to be used during the Approov token check
 process. The method `_decodeApproovToken()` is to decode and simultaneously check
@@ -157,8 +157,7 @@ current project.
 
 ### Import Dependencies
 
-We need to [require the dependencies](./server/approov-protected-server.py#L3
-4-9)
+We need to [require the dependencies](./server/approov-protected-server.py#L4-L9)
 we installed before, plus some more system dependencies:
 
 ```python
@@ -189,7 +188,7 @@ APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN=true
 APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM=true
 ```
 
-Now we can read them from our code, like is done [here](./server/approov-protected-server.py#L21-36):
+Now we can read them from our code, like is done [here](./server/approov-protected-server.py#L21-L36):
 
 ```python
 # file: server/approov-protected-server.py
@@ -215,7 +214,7 @@ if _approov_logging_enabled == 'false':
 
 ### Methods
 
-Let's start by adding [this method](./server/approov-protected-server.py#L44-46)
+Let's start by adding [this method](./server/approov-protected-server.py#L44-L46)
 to enable logging for Approov specific occurrences:
 
 ```python
@@ -226,7 +225,7 @@ def _logApproov(message):
         log.info(message)
 ```
 
-Now we need to add [this method](./server/approov-protected-server.py#L48-64) to
+Now we need to add [this method](./server/approov-protected-server.py#L48-L64) to
 decode the Approv token:
 
 ```python
@@ -251,7 +250,7 @@ def _decodeApproovToken(approov_token):
         return None
 ```
 
-Now we need to add [this method](./server/approov-protected-server.py#L66-78)
+Now we need to add [this method](./server/approov-protected-server.py#L66-L78)
 to get the Approov token and validate it in each endpoint we want to protect:
 
 ```python
@@ -272,7 +271,7 @@ def _getApproovToken():
     return approov_token_decoded
 ```
 
-We also need to add [this method](./server/approov-protected-server.py#L80-91)
+We also need to add [this method](./server/approov-protected-server.py#L80-L91)
 to handle requests with an invalid Approov token:
 
 ```python
@@ -292,7 +291,7 @@ def _handleApproovProtectedRequest(approov_token_decoded):
     _logApproov('ACCEPTED ' + message)
 ```
 
-Then we need [this method](./server/approov-protected-server.py#L93-109) to check
+Then we need [this method](./server/approov-protected-server.py#L93-L109) to check
 the custom payload claim in the Approov token:
 
 ```python
@@ -317,7 +316,7 @@ def _checkApproovCustomPayloadClaim(approov_token_decoded, claim_value):
     return True
 ```
 
-Finally we need [this method](./server/approov-protected-server.py#L111-124) to
+Finally we need [this method](./server/approov-protected-server.py#L111-L124) to
 handle the validation of the custom payload claim in the Approov token:
 
 ```python
@@ -343,7 +342,7 @@ def _handleApproovCustomPayloadClaim(approov_token_decoded, claim_value):
 
 To protect specific endpoints in a current server we only need to add the Approov
 token check for each endpoint we want to protect, as we have done in the
-[shapes](./server/approov-protected-server.py#L141-147) endpoint:
+[shapes](./server/approov-protected-server.py#L141-L147) endpoint:
 
 ```python
 # file: approov-protected-server.py
@@ -358,7 +357,7 @@ _handleApproovProtectedRequest(approov_token_decoded)
 ```
 
 or if using the custom payload claim in the Approov token, as we have done in
-the [forms](./server/approov-protected-server.py#L167-177) endpoint:
+the [forms](./server/approov-protected-server.py#L167-L177) endpoint:
 
 ```python
 # file: approov-protected-server.py
