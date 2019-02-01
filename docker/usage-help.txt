@@ -23,8 +23,8 @@ Commands/Args:
                               ./stack build
 
   approov-protected-server  Runs the approov server:
-                              ./stack approov-server
-                              ./stack --port 5000 approov-server
+                              ./stack approov-protected-server
+                              ./stack --port 5000 approov-protected-server
 
   original-server           Runs the original server:
                               ./stack original-server
