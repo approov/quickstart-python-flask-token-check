@@ -7,34 +7,35 @@ from dotenv import load_dotenv, find_dotenv
 from flask import Flask, request, abort, make_response, jsonify
 
 api = Flask(__name__)
+api.config["JSON_SORT_KEYS"] = False
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-load_dotenv(find_dotenv(), override=True)
-
-HTTP_PORT = int(getenv('HTTP_PORT', 5000))
+BAD_REQUEST_RESPONSE = {"status": "Bad Request"}
 
 def _getHeader(key, default_value = None):
     return request.headers.get(key, default_value)
 
-def _isEmpty(token):
-    return token is None or token == ""
+def _isEmpty(value):
+    return value is None or value == ""
 
-@api.route("/")
-def endpoints():
-    return jsonify(
-        hello="http://localhost:%i/hello" % HTTP_PORT,
-        shapes="http://localhost:%i/shapes" % HTTP_PORT,
-        forms="http://localhost:%i/forms" % HTTP_PORT
-    )
+def _getAuthorizationToken():
+    authorization_token = _getHeader("Authorization")
 
-@api.route("/hello")
-def hello():
-    return jsonify(hello="Hello World!")
+    if _isEmpty(authorization_token):
+        log.error('AUTHORIZATION TOKEN EMPTY')
+        abort(make_response(jsonify(BAD_REQUEST_REPONSE), 400))
 
-@api.route("/shapes")
-def shapes():
+    return authorization_token
+
+def _buildHelloResponse():
+    return jsonify({
+        "text": "Hello, World!",
+        "status": "Hello, World! (healthy)"
+    })
+
+def _buildShapeResponse(status):
     shape = choice([
         "Circle",
         "Triangle",
@@ -42,19 +43,12 @@ def shapes():
         "Rectangle",
     ])
 
-    return jsonify(shape=shape)
+    return jsonify({
+        "shape": shape,
+        "status": shape + ' (' + status + ')'
+    })
 
-@api.route("/forms")
-def forms():
-    oauth2_token = _getHeader("oauth2-token")
-
-    if _isEmpty(oauth2_token):
-        log.error('OAUTH2 TOKEN EMPTY')
-        abort(make_response(jsonify({}), 403))
-
-    # Now we can handle OAUTH2 as we usually would do in a Python Flask API.
-    # Maybe like in https://auth0.com/docs/quickstart/webapp/python/
-
+def _buildFormResponse(status):
     form = choice([
         'Sphere',
         'Cone',
@@ -62,4 +56,31 @@ def forms():
         'Box',
     ])
 
-    return jsonify(form=form)
+    return jsonify({
+        "form": form,
+        "status": form + ' (' + status + ')'
+    })
+
+@api.route("/")
+def homePage():
+    file = open('server/index.html', 'r')
+    content = file.read()
+    file.close()
+
+    return content
+
+@api.route("/v1/hello")
+def hello():
+    return _buildHelloResponse()
+
+@api.route("/v1/shapes")
+def shapes():
+    return _buildShapeResponse('unprotected')
+
+@api.route("/v1/forms")
+def forms():
+
+    # How to handle and validate the authorization token is out of scope for this tutorial.
+    authorization_token = _getAuthorizationToken()
+
+    return _buildFormResponse('unprotected')

@@ -11,9 +11,12 @@ from dotenv import load_dotenv, find_dotenv
 from flask import Flask, request, abort, make_response, jsonify
 
 api = Flask(__name__)
+api.config["JSON_SORT_KEYS"] = False
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
+BAD_REQUEST_RESPONSE = {"status": "Bad Request"}
 
 load_dotenv(find_dotenv(), override=True)
 
@@ -38,8 +41,49 @@ if _approov_logging_enabled == 'false':
 def _getHeader(key, default_value = None):
     return request.headers.get(key, default_value)
 
-def _isEmpty(token):
-    return token is None or token == ""
+def _isEmpty(value):
+    return value is None or value == ""
+
+def _getAuthorizationToken():
+    authorization_token = _getHeader("Authorization")
+
+    if _isEmpty(authorization_token):
+        log.error('AUTHORIZATION TOKEN EMPTY')
+        abort(make_response(jsonify(BAD_REQUEST_REPONSE), 400))
+
+    return authorization_token
+
+def _buildHelloResponse():
+    return jsonify({
+        "text": "Hello, World!",
+        "status": "Hello, World! (healthy)"
+    })
+
+def _buildShapeResponse(status):
+    shape = choice([
+        "Circle",
+        "Triangle",
+        "Square",
+        "Rectangle",
+    ])
+
+    return jsonify({
+        "shape": shape,
+        "status": shape + ' (' + status + ')'
+    })
+
+def _buildFormResponse(status):
+    form = choice([
+        'Sphere',
+        'Cone',
+        'Cube',
+        'Box',
+    ])
+
+    return jsonify({
+        "form": form,
+        "status": form + ' (' + status + ')'
+    })
 
 def _logApproov(message):
     if APPROOV_LOGGING_ENABLED is True:
@@ -86,7 +130,7 @@ def _handleApproovProtectedRequest(approov_token_decoded):
 
     if APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is True and not approov_token_decoded:
         _logApproov('REJECTED ' + message)
-        abort(make_response(jsonify({}), 400))
+        abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 400))
 
     _logApproov('ACCEPTED ' + message)
 
@@ -119,50 +163,42 @@ def _handleApproovCustomPayloadClaim(approov_token_decoded, claim_value):
 
     if not valid_claim and APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is True:
         _logApproov('REJECTED ' + message)
-        abort(make_response(jsonify({}), 400))
+        abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 400))
 
     _logApproov('ACCEPTED ' + message)
 
 @api.route("/")
-def endpoints():
-    return jsonify(
-        hello="http://localhost:%i/hello" % HTTP_PORT,
-        shapes="http://localhost:%i/shapes" % HTTP_PORT,
-        forms="http://localhost:%i/forms" % HTTP_PORT
-    )
+def homePage():
+    file = open('server/index.html', 'r')
+    content = file.read()
+    file.close()
 
-@api.route("/hello")
+    return content
+
+@api.route("/v1/hello")
 def hello():
-    return jsonify(hello="Hello World!")
+    return _buildHelloResponse()
 
-@api.route("/shapes")
+@api.route("/v1/shapes")
 def shapes():
+    return _buildShapeResponse('unprotected')
 
-    # Will get the Approov JWT token from the header, decode it and on success
-    # will return it, otherwise None is returned.
-    approov_token_decoded = _getApproovToken()
-
-    # If APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is set to True it will abort the request
-    # when the decoded approov token is empty.
-    _handleApproovProtectedRequest(approov_token_decoded)
-
-    shape = choice([
-        "Circle",
-        "Triangle",
-        "Square",
-        "Rectangle",
-    ])
-
-    return jsonify(shape=shape)
-
-@api.route("/forms")
+@api.route("/v1/forms")
 def forms():
+    # How to handle and validate the authorization token is out of scope for this tutorial.
+    authorization_token = _getAuthorizationToken()
 
-    oauth2_token = _getHeader("oauth2-token")
+    return _buildFormResponse('unprotected')
 
-    if _isEmpty(oauth2_token):
-        log.error('OAUTH2 TOKEN EMPTY')
-        abort(make_response(jsonify({}), 403))
+@api.route("/v2/hello")
+def helloV2():
+    return _buildHelloResponse()
+
+
+### APPROOV PROTECTED ENDPOINTS ###
+
+@api.route("/v2/shapes")
+def shapesV2():
 
     # Will get the Approov JWT token from the header, decode it and on success
     # will return it, otherwise None is returned.
@@ -172,18 +208,27 @@ def forms():
     # when the decoded approov token is empty.
     _handleApproovProtectedRequest(approov_token_decoded)
 
-    # check if the custom payload claim in the approov token is valid and aborts
+    return _buildShapeResponse('protected')
+
+@api.route("/v2/forms")
+def formsV2():
+
+    # Will get the Approov JWT token from the header, decode it and on success
+    # will return it, otherwise None is returned.
+    approov_token_decoded = _getApproovToken()
+
+    # If APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is set to True it will abort the request
+    # when the decoded approov token is empty.
+    _handleApproovProtectedRequest(approov_token_decoded)
+
+    # How to handle and validate the authorization token is out of scope for this tutorial, but
+    # you should only validate it after you have performed all the Approov checks.
+    authorization_token = _getAuthorizationToken()
+
+    # Checks if the custom payload claim in the Approov token is valid and aborts
     # the request if APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is set to True.
-    _handleApproovCustomPayloadClaim(approov_token_decoded, oauth2_token)
+    _handleApproovCustomPayloadClaim(approov_token_decoded, authorization_token)
 
-    # Now we can handle OAUTH2 as we usually would do in a Python Flask API.
-    # Maybe like in https://auth0.com/docs/quickstart/webapp/python/
+    # Now you are free to handle and validate your Authorization token as you usually do.
 
-    form = choice([
-        'Sphere',
-        'Cone',
-        'Cube',
-        'Box',
-    ])
-
-    return jsonify(form=form)
+    return _buildFormResponse('protected')
