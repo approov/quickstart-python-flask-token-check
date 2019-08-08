@@ -12,8 +12,6 @@ api.config["JSON_SORT_KEYS"] = False
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-BAD_REQUEST_RESPONSE = {"status": "Bad Request"}
-
 def _getHeader(key, default_value = None):
     return request.headers.get(key, default_value)
 
@@ -24,7 +22,7 @@ def _getAuthorizationToken():
     authorization_token = _getHeader("Authorization")
 
     if _isEmpty(authorization_token):
-        log.error('AUTHORIZATION TOKEN EMPTY')
+        log.error('AUTHORIZATION TOKEN EMPTY OR MISSING')
         abort(make_response(jsonify(BAD_REQUEST_REPONSE), 400))
 
     return authorization_token
@@ -32,10 +30,9 @@ def _getAuthorizationToken():
 def _buildHelloResponse():
     return jsonify({
         "text": "Hello, World!",
-        "status": "Hello, World! (healthy)"
     })
 
-def _buildShapeResponse(status):
+def _buildShapeResponse():
     shape = choice([
         "Circle",
         "Triangle",
@@ -45,10 +42,9 @@ def _buildShapeResponse(status):
 
     return jsonify({
         "shape": shape,
-        "status": shape + ' (' + status + ')'
     })
 
-def _buildFormResponse(status):
+def _buildFormResponse():
     form = choice([
         'Sphere',
         'Cone',
@@ -58,7 +54,6 @@ def _buildFormResponse(status):
 
     return jsonify({
         "form": form,
-        "status": form + ' (' + status + ')'
     })
 
 @api.route("/")
@@ -75,7 +70,7 @@ def hello():
 
 @api.route("/v1/shapes")
 def shapes():
-    return _buildShapeResponse('unprotected')
+    return _buildShapeResponse()
 
 @api.route("/v1/forms")
 def forms():
@@ -83,4 +78,4 @@ def forms():
     # How to handle and validate the authorization token is out of scope for this tutorial.
     authorization_token = _getAuthorizationToken()
 
-    return _buildFormResponse('unprotected')
+    return _buildFormResponse()
