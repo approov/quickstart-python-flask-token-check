@@ -16,11 +16,11 @@ api.config["JSON_SORT_KEYS"] = False
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-BAD_REQUEST_RESPONSE = {"status": "Bad Request"}
+BAD_REQUEST_RESPONSE = {}
 
 load_dotenv(find_dotenv(), override=True)
 
-HTTP_PORT = int(getenv('HTTP_PORT', 5000))
+HTTP_PORT = int(getenv('HTTP_PORT', 8002))
 APPROOV_BASE64_SECRET = getenv('APPROOV_BASE64_SECRET')
 
 APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN = True
@@ -28,10 +28,10 @@ _approov_enabled = getenv('APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN', 'True').lowe
 if _approov_enabled == 'false':
     APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN = False
 
-APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM = True
-_abort_on_invalid_claim = getenv('APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM', 'True').lower()
-if _abort_on_invalid_claim == 'false':
-    APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM = False
+APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING = True
+_abort_on_invalid_token_binding = getenv('APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING', 'True').lower()
+if _abort_on_invalid_token_binding == 'false':
+    APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING = False
 
 APPROOV_LOGGING_ENABLED = True
 _approov_logging_enabled = getenv('APPROOV_LOGGING_ENABLED', 'True').lower()
@@ -48,7 +48,7 @@ def _getAuthorizationToken():
     authorization_token = _getHeader("Authorization")
 
     if _isEmpty(authorization_token):
-        log.error('AUTHORIZATION TOKEN EMPTY')
+        log.error('AUTHORIZATION TOKEN EMPTY OR MISSING')
         abort(make_response(jsonify(BAD_REQUEST_REPONSE), 400))
 
     return authorization_token
@@ -56,10 +56,9 @@ def _getAuthorizationToken():
 def _buildHelloResponse():
     return jsonify({
         "text": "Hello, World!",
-        "status": "Hello, World! (healthy)"
     })
 
-def _buildShapeResponse(status):
+def _buildShapeResponse():
     shape = choice([
         "Circle",
         "Triangle",
@@ -69,10 +68,9 @@ def _buildShapeResponse(status):
 
     return jsonify({
         "shape": shape,
-        "status": shape + ' (' + status + ')'
     })
 
-def _buildFormResponse(status):
+def _buildFormResponse():
     form = choice([
         'Sphere',
         'Cone',
@@ -82,7 +80,6 @@ def _buildFormResponse(status):
 
     return jsonify({
         "form": form,
-        "status": form + ' (' + status + ')'
     })
 
 def _logApproov(message):
@@ -108,10 +105,19 @@ def _decodeApproovToken(approov_token):
         return None
 
 def _getApproovToken():
+
+    message = 'REQUEST WITH APPROOV TOKEN HEADER EMPTY OR MISSING'
+
     approov_token = _getHeader('approov-token')
 
     if _isEmpty(approov_token):
-        _logApproov('APPROOV TOKEN HEADER IS EMPTY')
+
+        if APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is True:
+            _logApproov('REJECTED ' + message)
+            abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 400))
+
+        _logApproov(message)
+
         return None
 
     approov_token_decoded = _decodeApproovToken(approov_token)
@@ -130,40 +136,40 @@ def _handleApproovProtectedRequest(approov_token_decoded):
 
     if APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN is True and not approov_token_decoded:
         _logApproov('REJECTED ' + message)
-        abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 400))
+        abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 401))
 
     _logApproov('ACCEPTED ' + message)
 
-def _checkApproovCustomPayloadClaim(approov_token_decoded, claim_value):
+def _checkApproovTokenBinding(approov_token_decoded, token_binding_header):
     if _isEmpty(approov_token_decoded):
         return False
 
     # checking if the approov token contains a payload and verify it.
     if 'pay' in approov_token_decoded:
 
-        # we need to hash and base64 encode the oauth2 token in order to verify
-        # it matches the same one contained in the approov token payload.
-        payload_claim_hash = sha256(claim_value.encode('utf-8')).digest()
-        payload_claim_base64_hash = b64encode(payload_claim_hash).decode('utf-8')
+        # We need to hash and base64 encode the token binding header, because that's how it was included in the Approov
+        # token on the mobile app.
+        token_binding_header_hash = sha256(token_binding_header.encode('utf-8')).digest()
+        token_binding_header_encoded = b64encode(token_binding_header_hash).decode('utf-8')
 
-        return approov_token_decoded['pay'] == payload_claim_base64_hash
+        return approov_token_decoded['pay'] == token_binding_header_encoded
 
-    # The Approov failover running in the Google cloud doesn't return the custom
-    # payload claim, thus we always need to have a pass when is not present.
+    # The Approov failover running in the Google cloud doesn't return the key
+    # `pay`, thus we always need to have a pass when is not present.
     return True
 
-def _handleApproovCustomPayloadClaim(approov_token_decoded, claim_value):
+def _handlesApproovTokenBindingVerification(approov_token_decoded, token_binding_header):
 
-    message = 'REQUEST WITH VALID CUSTOM PAYLOAD CLAIM IN THE APPROOV TOKEN'
+    message = 'REQUEST WITH VALID TOKEN BINDING IN THE APPROOV TOKEN'
 
-    valid_claim = _checkApproovCustomPayloadClaim(approov_token_decoded, claim_value)
+    valid_token_binding = _checkApproovTokenBinding(approov_token_decoded, token_binding_header)
 
-    if not valid_claim:
-        message = 'REQUEST WITH INVALID CUSTOM PAYLOAD CLAIM IN THE APPROOV TOKEN'
+    if not valid_token_binding:
+        message = 'REQUEST WITH INVALID TOKEN BINDING IN THE APPROOV TOKEN'
 
-    if not valid_claim and APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is True:
+    if not valid_token_binding and APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING is True:
         _logApproov('REJECTED ' + message)
-        abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 400))
+        abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 401))
 
     _logApproov('ACCEPTED ' + message)
 
@@ -181,14 +187,14 @@ def hello():
 
 @api.route("/v1/shapes")
 def shapes():
-    return _buildShapeResponse('unprotected')
+    return _buildShapeResponse()
 
 @api.route("/v1/forms")
 def forms():
     # How to handle and validate the authorization token is out of scope for this tutorial.
     authorization_token = _getAuthorizationToken()
 
-    return _buildFormResponse('unprotected')
+    return _buildFormResponse()
 
 @api.route("/v2/hello")
 def helloV2():
@@ -208,7 +214,7 @@ def shapesV2():
     # when the decoded approov token is empty.
     _handleApproovProtectedRequest(approov_token_decoded)
 
-    return _buildShapeResponse('protected')
+    return _buildShapeResponse()
 
 @api.route("/v2/forms")
 def formsV2():
@@ -222,13 +228,13 @@ def formsV2():
     _handleApproovProtectedRequest(approov_token_decoded)
 
     # How to handle and validate the authorization token is out of scope for this tutorial, but
-    # you should only validate it after you have performed all the Approov checks.
+    # you should only validate it after you have decoded the Approov token.
     authorization_token = _getAuthorizationToken()
 
-    # Checks if the custom payload claim in the Approov token is valid and aborts
-    # the request if APPROOV_ABORT_REQUEST_ON_INVALID_CUSTOM_PAYLOAD_CLAIM is set to True.
-    _handleApproovCustomPayloadClaim(approov_token_decoded, authorization_token)
+    # Checks if the Approov token binding is valid and aborts the request when the environment variable
+    # APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING is set to True.
+    _handlesApproovTokenBindingVerification(approov_token_decoded, authorization_token)
 
     # Now you are free to handle and validate your Authorization token as you usually do.
 
-    return _buildFormResponse('protected')
+    return _buildFormResponse()
