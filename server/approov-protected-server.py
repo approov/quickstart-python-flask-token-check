@@ -49,7 +49,7 @@ def _getAuthorizationToken():
 
     if _isEmpty(authorization_token):
         log.error('AUTHORIZATION TOKEN EMPTY OR MISSING')
-        abort(make_response(jsonify(BAD_REQUEST_REPONSE), 400))
+        abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 400))
 
     return authorization_token
 
