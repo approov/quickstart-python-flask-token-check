@@ -1,16 +1,16 @@
 # APPROOV INTEGRATION EXAMPLE
 
-To see how a Python Flask server runs with an Approov integration please follow the
-[Approov Shapes API Server](./docs/approov-shapes-api-server.md) walk-through.
+An Approov token integration example for a Python 3 Flask API as described in the article: [Approov Integration in a Python Flask API](https://blog.approov.io/approov-integration-in-a-python-flask-api).
 
-The concrete implementation of the Approov Shapes API Server is in the
-[approov-protected-server.py](./server/approov-protected-server.py) file, that
-is a simple Python Flask server with some endpoints protected by Approov and
-other endpoints without any Approov protection.
+## HOW TO USE
 
-Now let's continue reading this README for a **quick start** introduction in how
-to integrate Approov on a current project by using as an example the code for
-the Approov Shapes API Server.
+For your convenience we host ourselves the backend for this Approov integration walk-through, and the specific url for it can be found on the article, that we invite you to read in order to better understand the purpose and scope for this walk-through.
+
+If you prefer to have control of the backend please follow the [deployment](/docs/DEPLOYMENT.md) guide to deploy the backend to your own online server or just run it in localhost by following the [Approov Shapes API Server](./docs/approov-shapes-api-server.md) walk-through.
+
+The concrete implementation of the Approov Shapes API Server is in the [approov-protected-server.py](./server/approov-protected-server.py) file, that is a simple Python Flask server with some endpoints protected by Approov and other endpoints without any Approov protection.
+
+Now let's continue reading this README for a **quick start** introduction in how to integrate Approov on a current project by using as an example the code for the Approov Shapes API Server.
 
 
 ## APPROOV VALIDATION PROCESS
