@@ -6,21 +6,20 @@ services:
     image: approov/python-flask-shapes-demo
     build: ./docker
     restart: always
-    env_file: .env.example
+    env_file: .env
     environment:
       - FLASK_ENV=prod
     networks:
       - traefik
-      - default
-    command: "flask run -h 0.0.0.0"
+    command: "flask run -h 0.0.0.0 --port ${HTTP_PORT? Missing value for: HTTP_PORT}"
     volumes:
-      - "$PWD:/home/python/workspace"
+      - ./:/home/python/workspace
     labels:
       - "traefik.enable=true"
-      - "traefik.backend=approov-python-flask-shapes-demo"
+      - "traefik.backend=${PYTHON_FLASK_SHAPES_DOMAIN? Missing value for: PYTHON_FLASK_SHAPES_DOMAIN}"
       - "traefik.docker.network=traefik"
-      - "traefik.port=5000"
-      - "traefik.frontend.rule=Host:python-flask-shapes-demo.pdm.approov.io"
+      - "traefik.port=${HTTP_PORT}"
+      - "traefik.frontend.rule=Host:${PYTHON_FLASK_SHAPES_DOMAIN}"
 
 networks:
   traefik:
