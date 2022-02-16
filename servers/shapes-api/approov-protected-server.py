@@ -144,7 +144,6 @@ def _checkApproovTokenBinding(approov_token_decoded, token_binding_header):
     if _isEmpty(approov_token_decoded):
         return False
 
-    # checking if the approov token contains a payload and verify it.
     if 'pay' in approov_token_decoded:
 
         # We need to hash and base64 encode the token binding header, because that's how it was included in the Approov
@@ -154,11 +153,19 @@ def _checkApproovTokenBinding(approov_token_decoded, token_binding_header):
 
         return approov_token_decoded['pay'] == token_binding_header_encoded
 
-    # The Approov failover running in the Google cloud doesn't return the key
-    # `pay`, thus we always need to have a pass when is not present.
-    return True
+    return False
 
 def _handlesApproovTokenBindingVerification(approov_token_decoded, token_binding_header):
+
+    if not 'pay' in approov_token_decoded:
+        message = 'REQUEST WITH APPROOV TOKEN MISSING THE CLAIM TO VERIFY THE TOKEN BINDING'
+
+        if APPROOV_ABORT_REQUEST_ON_INVALID_TOKEN_BINDING is True:
+            _logApproov('REJECTED ' + message)
+            abort(make_response(jsonify(BAD_REQUEST_RESPONSE), 401))
+        else:
+            _logApproov('ACCEPTED ' + message)
+            return
 
     message = 'REQUEST WITH VALID TOKEN BINDING IN THE APPROOV TOKEN'
 
