@@ -1,0 +1,48 @@
+version: "2.3"
+
+services:
+
+  unprotected-server:
+    image: approov/python-flask:${FLASK_ENV:-development}
+    build: ./
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - FLASK_APP=hello-server-unprotected.py
+    networks:
+      - default
+    command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
+    ports:
+      - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
+    volumes:
+      - ./src/unprotected-server:/home/python/workspace
+
+  approov-token-check:
+    image: approov/python-flask:${FLASK_ENV:-development}
+    build: ./
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - FLASK_APP=hello_server_protected.py
+      - APPROOV_BASE64_SECRET=${APPROOV_BASE64_SECRET? Missing env var APPROOV_BASE64_SECRET}
+    networks:
+      - default
+    command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
+    ports:
+      - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
+    volumes:
+      - ./src/approov-protected-server/token-check:/home/python/workspace
+
+  approov-token-binding-check:
+    image: approov/python-flask:${FLASK_ENV:-development}
+    build: ./
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-development}
+      - FLASK_APP=hello_server_protected.py
+      - APPROOV_BASE64_SECRET=${APPROOV_BASE64_SECRET? Missing env var APPROOV_BASE64_SECRET}
+    networks:
+      - default
+    command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
+    ports:
+      - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
+    volumes:
+      - ./src/approov-protected-server/token-binding-check:/home/python/workspace
+
