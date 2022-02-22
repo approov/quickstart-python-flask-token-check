@@ -45,7 +45,7 @@ cd python-flask_approov-shapes-api-server
 Lets' copy the `.env.example` to `.env` with the command:
 
 ```bash
-cp .env-example .env
+cp .env.example .env
 ```
 
 No modifications are necessary to the newly created `.env` in order to start running the demo.
@@ -367,8 +367,7 @@ flask run -h 0.0.0.0 -p 8002
 
 **Request Overview:**
 
-In Postman we performed 2 requests with, where the first one was successful while the second request failed with a `401` response. This was because the token in the second request as already expired as we can see by the log messages in the shell view. A token expires when the timestamp contained in the payload claim `exp` is in the past.
-
+In Postman we performed 2 requests with correctly signed Approov tokens, where the first one was successful while the second request failed with a `401` response. This was because the token in the second request as already expired as we can see by the log messages in the shell view. A token expires when the timestamp contained in the payload claim `exp` is in the past.
 
 **Let's see the same request with Approov disabled**
 
