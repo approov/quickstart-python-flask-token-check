@@ -69,6 +69,4 @@ ENV PATH=/home/"${CONTAINER_USER}"/.local/bin:$PATH
 
 WORKDIR /home/${CONTAINER_USER}/workspace
 
-EXPOSE 5000
-
 CMD ["zsh"]
