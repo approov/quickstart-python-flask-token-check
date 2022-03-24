@@ -9,7 +9,7 @@ This quickstart is for developers familiar with Python who are looking for a qui
 * [Requirements](#requirements)
 * [Approov Setup](#approov-setup)
 * [Approov Token Check](#approov-token-check)
-* [Try the Approov Integration Example](#try-the-approov-integration-example)
+* [Test your Approov Integration](#test-your-approov-integration)
 
 
 ## Why?
@@ -204,3 +204,13 @@ HTTP/1.1 401 Unauthorized
 ...
 {}
 ```
+
+[TOC](#toc---table-of-contents)
+
+
+## Support
+
+If you find any issue while following this quickstart then just open an issue on this repo with the steps to reproduce it and we will help you to solve them.
+
+
+[TOC](#toc---table-of-contents)

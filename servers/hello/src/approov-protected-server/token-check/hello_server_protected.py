@@ -30,7 +30,6 @@ def _verifyApproovToken():
 
     # If we didn't find a token, then reject the request.
     if approov_token is None or approov_token == "":
-        # You may want to add some logging here.
         log.error('Approov Token Check: The Approov Token is empty...')
         return abort(make_response({}, 401))
 
@@ -39,15 +38,13 @@ def _verifyApproovToken():
         # avoid the algorithm None attack.
         g.approov_token_claims = jwt.decode(approov_token, APPROOV_SECRET, algorithms=['HS256'])
 
-        # When doesn't occur an exception we have a valid Aproov Token
+        # When doesn't occur an exception we have a valid Approov Token
 
     except jwt.ExpiredSignatureError as e:
-        # You may want to add some logging here.
         log.error(e)
         return abort(make_response({}, 401))
 
     except jwt.InvalidTokenError as e:
-        # You may want to add some logging here.
         log.error(e)
         return abort(make_response({}, 401))
 
@@ -57,4 +54,4 @@ def _verifyApproovToken():
 
 @api.route("/")
 def hello():
-    return jsonify({"message": "Hello World"})
+    return jsonify({"message": "Hello, World!"})

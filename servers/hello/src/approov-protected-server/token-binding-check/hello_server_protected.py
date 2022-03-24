@@ -88,4 +88,4 @@ def _verifyApproovTokenBinding():
 
 @api.route("/")
 def hello():
-    return jsonify({"message": "Hello World"})
+    return jsonify({"message": "Hello, World!"})

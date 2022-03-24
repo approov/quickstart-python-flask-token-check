@@ -7,6 +7,7 @@ This Approov integration example is from where the code example for the [Approov
 * [Why?](#why)
 * [How it Works?](#how-it-works)
 * [Requirements](#requirements)
+* [Setup Env File](#setup-env-file)
 * [Try the Approov Integration Example](#try-the-approov-integration-example)
 
 
@@ -36,11 +37,22 @@ To run this example you will need to have installed:
 [TOC](#toc---table-of-contents)
 
 
+## Setup Env File
+
+From `/servers/hello/src/approov-protected-server/token-binding-check` execute the following:
+
+```bash
+cp .env.example .env
+```
+
+Edit each file and add the [dummy secret](/README.md#the-dummy-secret) to it in order to be able to test the Approov integration with the provided [Postman collection](https://github.com/approov/postman-collections/blob/master/quickstarts/hello-world/hello-world.postman_curl_requests_examples.md).
+
+[TOC](#toc---table-of-contents)
+
+
 ## Try the Approov Integration Example
 
-First, you need to set the dummy secret in the `/servers/hello/src/approov-protected-server/token-binding-check/.env` file as explained [here](/README.md#the-dummy-secret).
-
-Second, you need to install the dependencies. From the `/servers/hello/src/approov-protected-server/token-binding-check` folder execute:
+First, you need to install the dependencies. From the `/servers/hello/src/approov-protected-server/token-binding-check` folder execute:
 
 ```text
 virtualenv venv
@@ -54,6 +66,26 @@ Now, you can run this example from the `/servers/hello/src/approov-protected-ser
 FLASK_APP=hello_server_protected.py flask run --port 8002
 ```
 > **NOTE:** If using python from inside a docker container add the option `--host 0.0.0.0`
+
+Next, you can test that it works with:
+
+```bash
+curl -iX GET 'http://localhost:8002'
+```
+
+The response will be a `401` unauthorized request:
+
+```text
+HTTP/1.0 401 UNAUTHORIZED
+Content-Type: application/json
+Content-Length: 3
+Server: Werkzeug/2.0.3 Python/3.10.3
+Date: Thu, 24 Mar 2022 12:34:04 GMT
+
+{}
+```
+
+The reason you got a `401` is because no Approoov token isn't provided in the headers of the request.
 
 Finally, you can test that the Approov integration example works as expected with this [Postman collection](/README.md#testing-with-postman) or with some cURL requests [examples](/README.md#testing-with-curl).
 

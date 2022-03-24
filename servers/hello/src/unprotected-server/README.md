@@ -45,7 +45,7 @@ To run this example you will need to have installed:
 
 First install the dependencies. From the `./servers/hello/src/unprotected-server` folder execute:
 
-```text
+```bash
 virtualenv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
@@ -53,14 +53,14 @@ pip3 install -r requirements.txt
 
 Now, you can run this example from the `./servers/hello/src/unprotected-server` folder with:
 
-```text
+```bash
 FLASK_APP=hello-server-unprotected.py flask run --port 8002
 ```
 > **NOTE:** If using python from inside a docker container add the option `--host 0.0.0.0`
 
 Finally, you can test that it works with:
 
-```text
+```bash
 curl -iX GET 'http://localhost:8002'
 ```
 
@@ -73,7 +73,7 @@ server: uvicorn
 content-length: 25
 content-type: application/json
 
-{"message":"Hello World"}
+{"message":"Hello, World!"}
 ```
 
 [TOC](#toc---table-of-contents)

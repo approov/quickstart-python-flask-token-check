@@ -18,28 +18,77 @@ To learn more about each Hello server example you need to read the README for ea
 
 ## Docker Stack
 
-The docker stack provided via the `docker-compose.yml` file in this folder is used for development proposes and if you are familiar with docker then feel free to also use it to follow along the examples.
+The docker stack provided via the `docker-compose.yml` file in this folder is used for development proposes and if you are familiar with docker then feel free to also use it to follow along the examples on the README of each server.
 
 If you decide to use the docker stack then you need to bear in mind that the Postman collections, used to test the servers examples, will connect to port `8002` therefore you cannot start all docker compose services at once, for example with `docker-compose up`, instead you need to run one at a time as exemplified below.
 
-For the unprotected server:
+### Setup Env File
+
+Do not forget to properly setup the `.env` file in the root of each Approov protected server example before you run the server with the docker stack.
+
+```bash
+cp src/approov-protected-server/token-check/.env.example src/approov-protected-server/token-check/.env
+cp src/approov-protected-server/token-binding-check/.env.example src/approov-protected-server/token-binding-check/.env
+```
+
+Edit each file and add the [dummy secret](/README.md#the-dummy-secret) to it in order to be able to test the Approov integration with the provided [Postman collection](https://github.com/approov/postman-collections/blob/master/quickstarts/hello-world/hello-world.postman_curl_requests_examples.md).
+
+### Build the Docker Stack
+
+The three services in the `docker-compose.yml` use the same Dockerfile, therefore to build the Docker image we just need to used one of them:
+
+```bash
+sudo docker-compose build approov-token-binding-check
+```
+
+Now, you are ready to start using the Docker stack for the Python Flask API.
+
+### Command Examples
+
+To run each of the Hello servers with docker compose you just need to follow the respective example below.
+
+#### For the unprotected server
+
+Run the container attached to your machine bash shell:
 
 ```bash
 sudo docker-compose up unprotected-server
 ```
 
-To run the Approov protected servers you need to provide a `.env` file with the Approov Base64 secret, therefore you need to copy the file `.env.example` to `.env` and add [the dummy secret](/README.md#the-dummy-secret) used only for test proposes on this examples.
+or get a bash shell inside the container:
 
-For the Approov Token Check:
+```bash
+sudo docker-compose run --rm --service-ports unprotected-server zsh
+```
+
+#### For the Approov Token Check
+
+Run the container attached to the shell:
 
 ```bash
 sudo docker-compose up approov-token-check
 ```
 
-For the Approov Token Binding Check:
+or get a bash shell inside the container:
 
 ```bash
-sudo docker-compose up approov-token-check
+sudo docker-compose run --rm --service-ports approov-token-check zsh
 ```
 
-If you find any issue while running the examples then just open an issue on this repo with the steps to reproduce it and we will help you to solve them.
+#### For the Approov Token Binding Check
+
+Run the container attached to the shell:
+
+```bash
+sudo docker-compose up approov-token-binding-check
+```
+
+or get a bash shell inside the container:
+
+```bash
+sudo docker-compose run --rm --service-ports approov-token-binding-check zsh
+```
+
+## Support
+
+If you find any issue while following this quickstart then just open an issue on this repo with the steps to reproduce it and we will help you to solve them.
