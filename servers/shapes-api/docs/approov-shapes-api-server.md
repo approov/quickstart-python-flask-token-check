@@ -25,9 +25,7 @@ checking the Approov token and how the requested was handled.
 
 ### Postman
 
-To make the API request against the Shapes API server running on your machine you will need to use Postman and import [this collection](https://raw.githubusercontent.com/approov/postman-collections/master/quickstarts/shapes-api/shapes-api.postman_collection.json)
-that contains all the API endpoints prepared with all scenarios we want to
-demonstrate.
+To make the API request against the Shapes API server running on your machine you will need to use Postman and import [this collection](https://raw.githubusercontent.com/approov/postman-collections/master/quickstarts/shapes-api/shapes-api.postman_collection.json) that contains all the API endpoints prepared with all scenarios we want to demonstrate.
 
 ### Clone the Repo
 
@@ -36,8 +34,8 @@ To run the Shapes API server on localhost you will need to have the repos for th
 Clone from Github with:
 
 ```bash
-git clone https://github.com/approov/python-flask_approov-shapes-api-server.git \
-cd python-flask_approov-shapes-api-server
+git clone https://github.com/approov/python-flask-token-check.git
+cd python-flask-token-check/servers/shapes-api
 ```
 
 ### The Environment File
@@ -57,50 +55,12 @@ recommend the use of Docker, that can be installed by following [the official
 instructions](https://docs.docker.com/install/) for your platform, but feel free
 to use your own setup, provided it satisfies the [requirements](#requirements).
 
-A bash script `./stack` is provided in the root of the demo, at `./servers/shapes-api`, to make easy to use the docker stack to run this demo.
+A symlink `./stack` to the bash script `./bin/stack.bash` is provided in the root of the demo, at `/servers/shapes-api`, to make easy to use the docker stack to run this demo.
 
-Show the usage help with:
+Show the usage help by running from `/servers/shapes-api`:
 
 ```bash
-DOCKER STACK CLI WRAPPER
-
-This bash script is a wrapper around docker for easier use of the docker stack
-in this project.
-
-Signature:
-  ./stack [options] <command> <args>
-
-
-Usage:
-  ./stack
-  ./stack [-h | --help] [-p | --port] [-u | --user] <command> <args>
-
-
-Options:
-  -h | --help  Shows this help.
-  -p | --port  The host port to access the docker container.
-  -u | --user  Run the docker container under the given user name or uid.
-
-
-Commands/Args:
-  build                     Builds the docker image for this stack:
-                              ./stack build
-
-  approov-protected-server  Runs the approov server:
-                              ./stack approov-protected-server
-                              ./stack --port 5000 approov-protected-server
-
-  original-server           Runs the original server:
-                              ./stack original-server
-                              ./stack --port 5001 original-server
-
-  stop <server>             Stops the docker container for the given server:
-                              ./stack stop approov-protected-server
-
-  shell <name> <server>     Starts a shell in a new container:
-                              ./stack shell
-                              ./stack shell zsh
-                              ./stack --port 5001 shell zsh original-server
+./stack --help
 ```
 
 #### Building the docker image
