@@ -42,8 +42,11 @@ ENV LANGUAGE "${LOCALE_STRING}:${LANGUAGE_CODE}"
 ENV PATH=/home/${CONTAINER_USER}/.local/bin:${PATH}
 ENV LC_ALL "${LOCALIZATION}"
 
-RUN pip install -U Flask PyJWT python-dotenv
-
 WORKDIR /home/${CONTAINER_USER}/workspace
+
+ADD ./src/approov-protected-server/token-binding-check/requirements.txt .
+
+RUN pip3 install -r requirements.txt && \
+    pip3 install virtualenv
 
 CMD ["zsh"]
