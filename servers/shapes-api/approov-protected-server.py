@@ -182,7 +182,7 @@ def _handlesApproovTokenBindingVerification(approov_token_decoded, token_binding
 
 @api.route("/")
 def homePage():
-    file = open('server/index.html', 'r')
+    file = open('index.html', 'r')
     content = file.read()
     file.close()
 
