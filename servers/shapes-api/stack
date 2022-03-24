@@ -69,11 +69,11 @@ for input in "${@}"
                 shift 2
                 ;;
             approov-protected-server)
-                Create_Docker_Container "flask run -h 0.0.0.0" "${CONTAINER_USER}" "${HTTP_PORT}" "approov-protected-server"
+                Create_Docker_Container "flask run -h 0.0.0.0 --port ${HTTP_PORT}" "${CONTAINER_USER}" "${HTTP_PORT}" "approov-protected-server"
                 exit 0
                 ;;
             original-server)
-                Create_Docker_Container "flask run -h 0.0.0.0" "${CONTAINER_USER}" "${HTTP_PORT}" "original-server"
+                Create_Docker_Container "flask run -h 0.0.0.0 --port ${HTTP_PORT}" "${CONTAINER_USER}" "${HTTP_PORT}" "original-server"
                 exit 0
                 ;;
             stop)
