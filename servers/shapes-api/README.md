@@ -1,6 +1,6 @@
 # APPROOV INTEGRATION EXAMPLE
 
-An Approov token integration example for a Python 3 Flask API as described in the article: [Approov Integration in a Python Flask API](https://blog.approov.io/approov-integration-in-a-python-flask-api).
+An Approov token integration example for a Python 3 Flask API as described in the article: [Approov Integration in a Python Flask API](https://approov.io/blog//approov-integration-in-a-python-flask-api).
 
 ## HOW TO USE
 
