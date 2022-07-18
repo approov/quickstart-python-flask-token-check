@@ -18,7 +18,7 @@ Copy the `.env.example`:
 cp .env.example .env
 ```
 
-### The Appoov secret
+### The Approov secret
 
 The `v2/*` endpoints are protected by the Approov Token, thus we need to set the Approov secret for `python-flask-shapes.approov.io`.
 
