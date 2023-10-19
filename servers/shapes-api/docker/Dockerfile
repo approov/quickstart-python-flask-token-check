@@ -1,4 +1,6 @@
-FROM ubuntu:18.04
+ARG TAG=3.10-slim
+
+FROM python:${TAG}
 
 ARG CONTAINER_USER="python"
 ARG CONTAINER_UID="1000"
@@ -29,7 +31,6 @@ RUN apt update && \
       zsh \
       unzip \
       libxss1 \
-      python-pip \
       python3-pip && \
 
     locale-gen en_GB.UTF-8 && \

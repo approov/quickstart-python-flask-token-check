@@ -7,7 +7,7 @@ For now this will be a small set of manual steps, but later we may want to autom
 ## CLONE
 
 ```
-git clone https://github.com/approov/python-flask_approov-shapes-api-server.git && cd python-flask_approov-shapes-api-server
+git clone https://github.com/approov/quickstart-python-flask-token-check.git && cd quickstart-python-flask-token-check/server/shapes-api
 ```
 
 ## ENVIRONMENT
@@ -45,7 +45,7 @@ sudo docker-compose build
 ### Bring the API up
 
 ```
-sudo docker-compose up -d
+sudo docker-compose up -d python
 ```
 
 ### Bring the API down
