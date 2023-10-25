@@ -9,5 +9,5 @@ MarkupSafe==2.0.1
 PyJWT==2.3.0
 python-dotenv==0.19.2
 typing-extensions==4.1.1
-Werkzeug==2.0.3
+Werkzeug==3.0.1
 zipp==3.6.0
