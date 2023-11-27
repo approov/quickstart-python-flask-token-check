@@ -23,11 +23,14 @@ services:
 
   python:
     image: ${DOCKER_IMAGE:-approov/quickstart-python-flask-token-check}
-    build: ./docker
+    build:
+      context: ./docker
+      args:
+        BUILD_RELEASE_FROM: ${BUILD_RELEASE_FROM:-main} # pass through to container from .env file
     restart: always
     env_file: .env
     environment:
-      - FLASK_ENV=${FLASK_ENV:-prod}
+      - FLASK_ENV=${FLASK_ENV:-production}
     networks:
       - traefik
     command: "flask run -h 0.0.0.0 --port ${HTTP_PORT? Missing value for: HTTP_PORT}"
