@@ -34,8 +34,8 @@ To run the Shapes API server on localhost you will need to have the repos for th
 Clone from Github with:
 
 ```bash
-git clone https://github.com/approov/python-flask-token-check.git
-cd python-flask-token-check/servers/shapes-api
+git clone https://github.com/approov/quickstart-python-flask-token-check.git
+cd quickstart-python-flask-token-check/servers/shapes-api
 ```
 
 ### The Environment File
