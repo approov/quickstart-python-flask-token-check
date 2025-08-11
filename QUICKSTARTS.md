@@ -13,19 +13,19 @@ Both the quickstarts are built from the unprotected example server defined [here
 
 Code difference between the Approov token check quickstart and the original unprotected server:
 
-```
+```bash
 git diff --no-index servers/hello/src/unprotected-server/hello-server-unprotected.py servers/hello/src/approov-protected-server/token-check/hello_server_protected.py
 ```
 
 You can do the same for the Approov token binding quickstart:
 
-```
+```bash
 git diff --no-index servers/hello/src/unprotected-server/hello-server-unprotected.py servers/hello/src/approov-protected-server/token-binding-check/hello_server_protected.py
 ```
 
 Or you can compare the code difference between the two quickstarts:
 
-```
+```bash
 git diff --no-index servers/hello/src/approov-protected-server/token-check/hello_server_protected.py servers/hello/src/approov-protected-server/token-binding-check/hello_server_protected.py
 ```
 

@@ -44,7 +44,7 @@ ENV LC_ALL "${LOCALIZATION}"
 
 WORKDIR /home/${CONTAINER_USER}/workspace
 
-ADD ./src/approov-protected-server/token-binding-check/requirements.txt .
+ADD ./servers/hello/src/approov-protected-server/message-signature/requirements.txt .
 
 RUN pip3 install -r requirements.txt && \
     pip3 install virtualenv

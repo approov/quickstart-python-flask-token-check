@@ -14,6 +14,7 @@ To learn more about each Hello server example you need to read the README for ea
 * [Unprotected Server](./servers/hello/src/unprotected-server)
 * [Approov Protected Server - Token Check](./servers/hello/src/approov-protected-server/token-check)
 * [Approov Protected Server - Token Binding Check](./servers/hello/src/approov-protected-server/token-binding-check)
+* [Approov Protected Server - Token Message Signature](](./servers/hello/src/approov-protected-server/message-signature))
 
 
 ## Docker Stack
@@ -29,9 +30,10 @@ Do not forget to properly setup the `.env` file in the root of each Approov prot
 ```bash
 cp servers/hello/src/approov-protected-server/token-check/.env.example servers/hello/src/approov-protected-server/token-check/.env
 cp servers/hello/src/approov-protected-server/token-binding-check/.env.example servers/hello/src/approov-protected-server/token-binding-check/.env
+cp servers/hello/src/approov-protected-server/messsage-signature/.env.example servers/hello/src/approov-protected-server/message-signature/.env
 ```
 
-Edit each file and add the [dummy secret](/TESTING.md#the-dummy-secret) to it in order to be able to test the Approov integration with the provided [Postman collection](https://github.com/approov/postman-collections/blob/master/quickstarts/hello-world/hello-world.postman_curl_requests_examples.md).
+Edit each file and add the [dummy secret](/TESTING.md#the-dummy-secret) to it in order to be able to test the Approov integration with the provided [Postman collection](./servers/hello/postman-collections/hello-world.postman_curl_requests_examples.md).
 
 ### Build the Docker Stack
 
@@ -88,6 +90,12 @@ or get a bash shell inside the container:
 ```bash
 sudo docker-compose run --rm --service-ports approov-token-binding-check zsh
 ```
+
+
+### For the Approov Token Message Signature
+
+
+
 
 ## Issues
 

@@ -35,6 +35,7 @@ The request is handled such that:
 
 * If the Approov Token is valid, the request is allowed to be processed by the API endpoint
 * If the Approov Token is invalid, an HTTP 401 Unauthorized response is returned
+* If an HTTP Message Signature is required (e.g., the token contains an ipk claim), the server verifies the Signature-Input and Signature headers; if the signature is missing or invalid, an HTTP 401 Unauthorized is returned 
 
 You can choose to log JWT verification failures, but we left it out on purpose so that you can have the choice of how you prefer to do it and decide the right amount of information you want to log.
 

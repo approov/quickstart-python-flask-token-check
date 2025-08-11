@@ -44,3 +44,16 @@ services:
     volumes:
       - ./src/approov-protected-server/token-binding-check:/home/python/workspace
 
+  approov-token-message-signature:
+      image: approov/python-flask:${FLASK_ENV:-development}
+      build: ./
+      environment:
+        - FLASK_ENV=${FLASK_ENV:-development}
+        - FLASK_APP=hello_server_protected.py
+      networks:
+        - default
+      command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
+      ports:
+        - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
+      volumes:
+        - ./src/approov-protected-server/message-signature:/home/python/workspace
