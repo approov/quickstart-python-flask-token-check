@@ -1,0 +1,890 @@
+{
+	"info": {
+		"_postman_id": "5a08cb69-aed8-4840-800c-3d4d0cdf629c",
+		"name": "Approov Shapes API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20280189"
+	},
+	"item": [
+		{
+			"name": "v0",
+			"item": [
+				{
+					"name": "/hello",
+					"item": [
+						{
+							"name": "/v0/hello - Public",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{DOMAIN}}/hello",
+									"host": [
+										"{{DOMAIN}}"
+									],
+									"path": [
+										"hello"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "/shapes",
+					"item": [
+						{
+							"name": "/v0//shapes  - Unprotected by Approov",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{DOMAIN}}/shapes",
+									"host": [
+										"{{DOMAIN}}"
+									],
+									"path": [
+										"shapes"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "v1",
+			"item": [
+				{
+					"name": "/hello",
+					"item": [
+						{
+							"name": "/v1/hello - Unprotected by Approov",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{DOMAIN}}/v1/hello",
+									"host": [
+										"{{DOMAIN}}"
+									],
+									"path": [
+										"v1",
+										"hello"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "/shapes",
+					"item": [
+						{
+							"name": "/v1/shapes - Unprotected by Approov",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Api-Key",
+										"value": "yXClypapWNHIifHUWmBIyPFAm",
+										"type": "default"
+									}
+								],
+								"url": {
+									"raw": "{{DOMAIN}}/v1/shapes",
+									"host": [
+										"{{DOMAIN}}"
+									],
+									"path": [
+										"v1",
+										"shapes"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "/forms",
+					"item": [
+						{
+							"name": "/v1/forms - Unprotected by Approov",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{DOMAIN}}/v1/forms",
+									"host": [
+										"{{DOMAIN}}"
+									],
+									"path": [
+										"v1",
+										"forms"
+									]
+								},
+								"description": "The approov token contains a payload that is a base64 string of the sha256 hash for the oauth2-token.\n\nThis ties the approov token with the user authentication token, thus securing further the request."
+							},
+							"response": []
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "v2",
+			"item": [
+				{
+					"name": "/hello",
+					"item": [
+						{
+							"name": "/v2//hello - Public",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{DOMAIN}}/v2/hello",
+									"host": [
+										"{{DOMAIN}}"
+									],
+									"path": [
+										"v2",
+										"hello"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "/shapes",
+					"item": [
+						{
+							"name": "valid requests",
+							"item": [
+								{
+									"name": "/v2/shapes - Approov Token with valid signature and expire time",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MDg2ODMyMDUuODkxOTEyfQ.c8I4KNndbThAQ7zlgX4_QDtcxCrD9cff1elaCJe9p9U"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "invalid requests",
+							"item": [
+								{
+									"name": "/v2/shapes - Missing the Approov  Token",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v2/shapes - Malformed Approov Token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "adasdasdsadasd"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v2/shapes - Expired Approov Token with valid signature",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NTUwODMzNDkuMzc3NzYyM30.XzZs_ItunAmisfTAuLLHqTytNnQqnwqh0Koh3PPKAoM"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "/forms",
+					"item": [
+						{
+							"name": "valid requests",
+							"item": [
+								{
+									"name": "/v2/forms - Approov Token with payload that matches the Authorization token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MTgwMTgyMjQuNzgwMzY4LCJwYXkiOiJWUUZGUEpaNjgyYU90eFJNanowa3RDSG15V2VFRWVTTXZYaDF1RDhKM3ZrPSJ9.N-KwuLeUt9s6TDibhX32AIkhobCYVh5-brVESqUxdBk"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"forms"
+											]
+										},
+										"description": "The approov token contains a payload that is a base64 string of the sha256 hash for the oauth2-token.\n\nThis ties the approov token with the user authentication token, thus securing further the request."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "invalid requests",
+							"item": [
+								{
+									"name": "/v2/forms - Missing the Approov  Token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"forms"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v2/forms - Malformed Approov Token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "adasdasdsadasd"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"forms"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v2/forms - Approov Token with custom payload claim not matching the Authorization token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MDg2ODM0NTcuNDg1Mzk1LCJwYXkiOiI1NjZ2UVdhV0dCZ3MrS0U4eXNqVFRQUXRncHVlK1hMTXF4OGVZb2JDckkwPSJ9.v9CxDagzviU6VcilyT7pC793FDzm_bjqG2sQqmmU5GE"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"forms"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v2/forms - Approov Token without the custom payload claim",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MDg2ODMyMDUuODkxOTEyfQ.c8I4KNndbThAQ7zlgX4_QDtcxCrD9cff1elaCJe9p9U"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v2/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v2",
+												"forms"
+											]
+										},
+										"description": "We need to accept the request as valid even when a custom payload claim is normally used in the Approov Token but is not present. This can happen when the Approov token comes from the Approov failover running in the Google Cloud."
+									},
+									"response": []
+								}
+							]
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "v3",
+			"item": [
+				{
+					"name": "/hello",
+					"item": [
+						{
+							"name": "/v3//hello - Public",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{DOMAIN}}/v3/hello",
+									"host": [
+										"{{DOMAIN}}"
+									],
+									"path": [
+										"v3",
+										"hello"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "/shapes",
+					"item": [
+						{
+							"name": "valid requests",
+							"item": [
+								{
+									"name": "/v3/shapes - Approov Token with valid signature and expire time",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MDg2ODMyMDUuODkxOTEyfQ.c8I4KNndbThAQ7zlgX4_QDtcxCrD9cff1elaCJe9p9U"
+											},
+											{
+												"key": "Api-Key",
+												"value": "yXClypapWNHIifHUWmBIyPFAm",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "invalid requests",
+							"item": [
+								{
+									"name": "/v3/shapes - Missing the Approov  Token",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v3/shapes - Malformed Approov Token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "adasdasdsadasd"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v3/shapes - Expired Approov Token with valid signature",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1NTUwODMzNDkuMzc3NzYyM30.XzZs_ItunAmisfTAuLLHqTytNnQqnwqh0Koh3PPKAoM"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/shapes",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"shapes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "/forms",
+					"item": [
+						{
+							"name": "valid requests",
+							"item": [
+								{
+									"name": "/v3/forms - Approov Token with payload that matches the Authorization token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MDg2ODMzNTUuMjI3NDE1LCJwYXkiOiJmM1UyZm5pQkpWRTA0VGRlY2owZDZvclY5cVQ5dDUyVGpmSHhkVXFEQmdZPSJ9.pphJoK8IlN2fdX0s47UtV4LKgDbnPMlRGRHOgQnYeXU"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+												"type": "text"
+											},
+											{
+												"key": "Api-Key",
+												"value": "yXClypapWNHIifHUWmBIyPFAm",
+												"type": "default"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"forms"
+											]
+										},
+										"description": "The approov token contains a payload that is a base64 string of the sha256 hash for the oauth2-token.\n\nThis ties the approov token with the user authentication token, thus securing further the request."
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "invalid requests",
+							"item": [
+								{
+									"name": "/v3/forms - Missing the Approov  Token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"forms"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v3/forms - Malformed Approov Token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "adasdasdsadasd"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"forms"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v3/forms - Approov Token with custom payload claim not matching the Authorization token",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MDg2ODM0NTcuNDg1Mzk1LCJwYXkiOiI1NjZ2UVdhV0dCZ3MrS0U4eXNqVFRQUXRncHVlK1hMTXF4OGVZb2JDckkwPSJ9.v9CxDagzviU6VcilyT7pC793FDzm_bjqG2sQqmmU5GE"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"forms"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "/v3/forms - Approov Token without the custom payload claim",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Approov-Token",
+												"type": "text",
+												"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjQ3MDg2ODMyMDUuODkxOTEyfQ.c8I4KNndbThAQ7zlgX4_QDtcxCrD9cff1elaCJe9p9U"
+											},
+											{
+												"key": "Authorization",
+												"type": "text",
+												"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+											}
+										],
+										"url": {
+											"raw": "{{DOMAIN}}/v3/forms",
+											"host": [
+												"{{DOMAIN}}"
+											],
+											"path": [
+												"v3",
+												"forms"
+											]
+										},
+										"description": "We need to accept the request as valid even when a custom payload claim is normally used in the Approov Token but is not present. This can happen when the Approov token comes from the Approov failover running in the Google Cloud."
+									},
+									"response": []
+								}
+							]
+						}
+					],
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "/ - Home page",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{DOMAIN}}",
+					"host": [
+						"{{DOMAIN}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

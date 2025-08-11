@@ -8,14 +8,15 @@ Each Quickstart has at their end a dedicated section for testing, that will walk
 
 * [Approov Token](/docs/APPROOV_TOKEN_QUICKSTART.md#test-your-approov-integration) test examples.
 * [Approov Token Binding](/docs/APPROOV_TOKEN_BINDING_QUICKSTART.md#test-your-approov-integration) test examples.
+* [Approov Token Message Signatue](/docs/APPROOV_TOKEN_MESSAGE_SIGNATURE_QUICKSTART.md#test-your-approov-integration) test examples.
 
 ### Testing with Postman
 
-A ready-to-use Postman collection can be found [here](https://raw.githubusercontent.com/approov/postman-collections/master/quickstarts/hello-world/hello-world.postman_collection.json). It contains a comprehensive set of example requests to send to the backend server for testing. The collection contains requests with valid and invalid Approov tokens, and with and without token binding.
+A ready-to-use Postman collection can be found [here](./servers/hello/postman-collections/hello-world.postman_collection.json). It contains a comprehensive set of example requests to send to the backend server for testing. The collection contains requests with valid and invalid Approov tokens, and with and without token binding.
 
 ### Testing with Curl
 
-An alternative to the Postman collection is to use cURL to make the API requests. Check some examples [here](https://github.com/approov/postman-collections/blob/master/quickstarts/hello-world/hello-world.postman_curl_requests_examples.md).
+An alternative to the Postman collection is to use cURL to make the API requests. Check some examples [here](./servers/hello/postman-collections/hello-world.postman_curl_requests_examples.md)
 
 ### The Dummy Secret
 

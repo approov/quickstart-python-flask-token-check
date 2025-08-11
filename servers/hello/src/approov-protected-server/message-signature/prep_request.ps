@@ -1,0 +1,63 @@
+Param(
+  [string]$Method = "GET",
+  [string]$PathOnly = "/token",
+  [string]$EnvFile = ".env"
+)
+
+$PubB64 = "public_key.b64"
+$PrivPem = "private_key.pem"
+$TokenFile = "token.txt"
+$MessageFile = "message.txt"
+$SigDer = "sig.der"
+$SigB64 = "signature.b64"
+
+if (!(Test-Path $PubB64))  { throw "Missing $PubB64" }
+if (!(Test-Path $PrivPem)) { throw "Missing $PrivPem" }
+if (!(Test-Path $EnvFile)) { throw "Missing $EnvFile" }
+
+# Load APPROOV_BASE64_SECRET from .env
+$envLine = (Get-Content $EnvFile) | Where-Object { $_ -match '^APPROOV_BASE64_SECRET=' } | Select-Object -First 1
+if (-not $envLine) { throw "APPROOV_BASE64_SECRET not found in .env" }
+$secretB64 = $envLine.Split('=')[1].Trim()
+
+# 2) Mint JWT with ipk
+$py = @"
+import jwt, base64, time, sys
+secret_b64 = sys.argv[1]
+pubfile = sys.argv[2]
+with open(pubfile,'r') as f:
+    ipk = f.read().strip()
+secret = base64.b64decode(secret_b64)
+payload = {
+  "exp": int(time.time()) + 3600,
+  "aud": "",
+  "ip": "1.2.3.4",
+  "did": "ExampleApproovTokenDID==",
+  "ipk": ipk
+}
+print(jwt.encode(payload, secret, algorithm="HS256"))
+"@
+$tempPy = Join-Path $env:TEMP "make_token.py"
+$py | Out-File -Encoding ascii $tempPy
+$token = & python $tempPy $secretB64 $PubB64
+Remove-Item $tempPy -ErrorAction SilentlyContinue
+$token | Out-File -Encoding ascii $TokenFile
+
+# 3) Build message
+"@method: $Method`n@target-uri: $PathOnly" | Out-File -Encoding ascii $MessageFile
+
+# 4) Sign with private key (DER ECDSA)
+& openssl dgst -sha256 -sign $PrivPem -out $SigDer $MessageFile | Out-Null
+[IO.File]::WriteAllText($SigB64, [Convert]::ToBase64String([IO.File]::ReadAllBytes($SigDer)))
+
+Write-Host ""
+Write-Host "✅ Done. Generated files:"
+Write-Host "  - $TokenFile"
+Write-Host "  - $MessageFile"
+Write-Host "  - $SigB64"
+Write-Host ""
+Write-Host "👉 Now run Step 5 (your curl). Example:"
+Write-Host "curl -i http://localhost:8002$PathOnly `"
+Write-Host "  -H `"Approov-Token: $(Get-Content $TokenFile -Raw)`" `"
+Write-Host "  -H 'Signature-Input: install=(\"@method\" \"@target-uri\");alg=\"ecdsa-p256-sha256\"' `"
+Write-Host "  -H `"Signature: install=:$(Get-Content $SigB64 -Raw):`""
