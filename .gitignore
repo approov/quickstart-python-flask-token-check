@@ -15,3 +15,5 @@
 .env
 !.gitkeep
 __pycache__/
+/server/config
+/server/venv

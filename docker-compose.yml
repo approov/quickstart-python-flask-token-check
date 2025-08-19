@@ -1,59 +1,20 @@
-version: "2.3"
-
 services:
+  approov-server:
+    build: .
+    container_name: approov-server
+    working_dir: /home/python/workspace/server
+    command: ["python", "-u", "hello_server_protected.py", "${HTTP_PORT:-8002}"]
 
-  unprotected-server:
-    image: approov/python-flask:${FLASK_ENV:-development}
-    build: ./
+    env_file:
+      - ./server/config/.env
     environment:
-      - FLASK_ENV=${FLASK_ENV:-development}
-      - FLASK_APP=hello-server-unprotected.py
-    networks:
-      - default
-    command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
-    ports:
-      - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
-    volumes:
-      - ./src/unprotected-server:/home/python/workspace
+      - DEV_DIR=/home/python/workspace/server/config
+      - PYTHONUNBUFFERED=1
 
-  approov-token-check:
-    image: approov/python-flask:${FLASK_ENV:-development}
-    build: ./
-    environment:
-      - FLASK_ENV=${FLASK_ENV:-development}
-      - FLASK_APP=hello_server_protected.py
-    networks:
-      - default
-    command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
-    ports:
-      - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
     volumes:
-      - ./src/approov-protected-server/token-check:/home/python/workspace
+      - ./server:/home/python/workspace/server
 
-  approov-token-binding-check:
-    image: approov/python-flask:${FLASK_ENV:-development}
-    build: ./
-    environment:
-      - FLASK_ENV=${FLASK_ENV:-development}
-      - FLASK_APP=hello_server_protected.py
-    networks:
-      - default
-    command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
     ports:
-      - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
-    volumes:
-      - ./src/approov-protected-server/token-binding-check:/home/python/workspace
+      - "${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}"
 
-  approov-token-message-signature:
-      image: approov/python-flask:${FLASK_ENV:-development}
-      build: ./
-      environment:
-        - FLASK_ENV=${FLASK_ENV:-development}
-        - FLASK_APP=hello_server_protected.py
-      networks:
-        - default
-      command: "flask run -h 0.0.0.0 --port ${HTTP_PORT:-8002}"
-      ports:
-        - ${HOST_IP:-127.0.0.1}:${HTTP_PORT:-8002}:${HTTP_PORT:-8002}
-      volumes:
-        - ./src/approov-protected-server/message-signature:/home/python/workspace
+
