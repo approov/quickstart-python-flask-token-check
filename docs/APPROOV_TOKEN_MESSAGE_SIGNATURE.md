@@ -41,9 +41,6 @@ It will create .env file inside /donfig folder
 mkdir -p config && cp -n .env.example config/.env
 ```
 
-```bash
-mkdir .dev -Force | Out-Null; if ((Test-Path .env.example) -and -not (Test-Path .dev/.env)) { Copy-Item .env.example .dev/.env }
-```
 
 ### 3. Generete Approov secret
 Now, get your Approov Secret with the [Approov CLI](https://approov.io/docs/latest/approov-installation/index.html#initializing-the-approov-cli):

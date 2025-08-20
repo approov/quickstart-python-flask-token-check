@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# server.py — Approov demo server matching prep.sh + tests.sh
 
 from flask import Flask, jsonify, request, abort, make_response
 import logging, base64, hashlib, re, os, sys, jwt
@@ -29,7 +28,8 @@ api.config["JSON_SORT_KEYS"] = False
 CHECKS_ENABLED = True
 
 # Port comes from env (HTTP_PORT), but can be overridden by CLI arg (digits only)
-HTTP_PORT = int(os.getenv("HTTP_PORT", "8002"))
+SERVER_HOSTNAME = os.getenv("SERVER_HOSTNAME")
+HTTP_PORT = int(os.getenv("HTTP_PORT"))
 if len(sys.argv) > 1 and sys.argv[1].isdigit():
     HTTP_PORT = int(sys.argv[1])
 
@@ -225,4 +225,4 @@ def token_state():
     return make_response(msg, 200, {"Content-Type": "text/plain; charset=utf-8"})
 
 if __name__ == "__main__":
-    api.run(host="127.0.0.1", port=HTTP_PORT, debug=False)
+    api.run(host=SERVER_HOSTNAME, port=HTTP_PORT, debug=False)

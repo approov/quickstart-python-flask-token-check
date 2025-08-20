@@ -27,7 +27,7 @@ You can learn more about Approov, the motives for adopting it, and more detail o
 
 [Approov](https://approov.io) is an API security solution used to verify that requests received by your backend services originate from trusted versions of your mobile apps.
 
-Go to `docs/APPROOV_TOKEN_MESSAGE_SIGNATURE.md` for detailed steps.
+Go to `docs/APPROOV_TOKEN_MESSAGE_SIGNATURE.md` for testing approov.
 
 ## Requirements
 
