@@ -4,8 +4,38 @@
 
 This repo implements the Approov server-side request verification code with the Python Flask framework in a simple Hello API server, which performs the verification check before allowing valid traffic to be processed by the API endpoint.
 
-Originally this repo was just to show the Approov token integration example on a Python 3 Flask API as described in the article: [Approov Integration in a Python Flask API](https://approov.io/blog//approov-integration-in-a-python-flask-api), that you can still find at [/servers/shapes-api](/servers/shapes-api).
 
+## The Quickstarts
+
+The quickstart code for the Approov backend server is implemented in (/docs/APPROOV_TOKEN_MESSAGE_SIGNATURE.md) That has three features availibale:
+* Approov token check 
+* Approov token check with token binding 
+* Approov token check with message signature
+
+
+## Why?
+
+You can learn more about Approov, the motives for adopting it, and more detail on how it works by following this [link](https://approov.io/product). In brief, Approov:
+
+* Ensures that accesses to your API come from official versions of your apps; it blocks accesses from republished, modified, or tampered versions
+* Protects the sensitive data behind your API; it prevents direct API abuse from bots or scripts scraping data and other malicious activity
+* Secures the communication channel between your app and your API with [Approov Dynamic Certificate Pinning](https://approov.io/docs/latest/approov-usage-documentation/#approov-dynamic-pinning). This has all the benefits of traditional pinning but without the drawbacks
+* Removes the need for an API key in the mobile app
+* Provides DoS protection against targeted attacks that aim to exhaust the API server resources to prevent real users from reaching the service or to at least degrade the user experience.
+
+## Testing Approov with Curl 
+
+[Approov](https://approov.io) is an API security solution used to verify that requests received by your backend services originate from trusted versions of your mobile apps.
+
+Go to `docs/APPROOV_TOKEN_MESSAGE_SIGNATURE.md` for testing approov.
+
+## Requirements
+
+To complete this quickstart you will need both Python, Flask, and the Approov CLI tool installed.
+
+* [Python 3](https://wiki.python.org/moin/BeginnersGuide/Download)
+* [Flask](https://flask.palletsprojects.com/en/2.0.x/installation/)
+* [Approov CLI](https://approov.io/docs/latest/approov-installation/#approov-tool) - Learn how to use it [here](https://approov.io/docs/latest/approov-cli-tool-reference/)
 
 ## Approov Integration Quickstart
 
@@ -65,64 +95,9 @@ Next, you need to install the dependencies:
 pip3 install -r requirements.txt
 ```
 
-Now, add this code to your project, just before your first API endpoint:
-
-```python
-from flask import Flask, jsonify, request, abort, g, make_response
-
-# @link https://github.com/jpadilla/pyjwt/
-import jwt
-import base64
-import hashlib
-
-# @link https://github.com/theskumar/python-dotenv
-from dotenv import load_dotenv, find_dotenv
-load_dotenv(find_dotenv(), override=True)
-from os import getenv
-
-api = Flask(__name__)
-
-# Token secret value obtained with the Approov CLI tool:
-#  - approov secret -get
-approov_base64_secret = getenv('APPROOV_BASE64_SECRET')
-
-if approov_base64_secret == None:
-    raise ValueError("Missing the value for environment variable: APPROOV_BASE64_SECRET")
-
-APPROOV_SECRET = base64.b64decode(approov_base64_secret)
-
-@api.before_request
-def _verifyApproovToken():
-    approov_token = request.headers.get("Approov-Token")
-
-    # If we didn't find a token, then reject the request.
-    if approov_token is None or approov_token == "":
-        # You may want to add some logging here.
-        return abort(make_response({}, 401))
-
-    try:
-        # Decode the Approov token explicitly with the HS256 algorithm to
-        # avoid the algorithm None attack.
-        g.approov_token_claims = jwt.decode(approov_token, APPROOV_SECRET, algorithms=['HS256'])
-
-        # When doesn't occur an exception we have a valid Aproov Token
-
-    except jwt.ExpiredSignatureError as e:
-        # You may want to add some logging here.
-        return abort(make_response({}, 401))
-
-    except jwt.InvalidTokenError as e:
-        # You may want to add some logging here.
-        return abort(make_response({}, 401))
-
-    except:
-        return abort(make_response({}, 401))
+ Add code from `/server/hello_server_protected.py` to your project
 
 
-#@api.route("/")
-#def hello():
-#    return jsonify({"message": "Hello World"})
-```
 
 > **NOTE:** When the Approov token validation fails we return a `401` with an empty body, because we don't want to give clues to an attacker about the reason the request failed, and you can go even further by returning a `400`.
 
@@ -131,17 +106,37 @@ Using the `before_request` decorator approach will ensure that all endpoints in 
 Not enough details in the bare bones quickstart? No worries, check the [detailed quickstarts](QUICKSTARTS.md) that contain a more comprehensive set of instructions, including how to test the Approov integration.
 
 
-## More Information
+## Test your Approov Integration
 
-* [Approov Overview](OVERVIEW.md)
-* [Detailed Quickstarts](QUICKSTARTS.md)
-* [Examples](EXAMPLES.md)
-* [Testing](TESTING.md)
+
+Generate a valid token example from the Approov Cloud service(???):
+
+```bash
+approov token -setDataHashInToken 'Bearer authorizationtoken' -genExample your.api.domain.com
+```
+
+Then make the request with the generated token:
+
+```text
+curl -i --request GET '' \
+  --header 'Authorization: Bearer authorizationtoken' \
+  --header 'Approov-Token: APPROOV_TOKEN_EXAMPLE_HERE'
+```
+
+The request should be accepted. For example:
+
+```text
+HTTP/1.1 200 OK
+
+...
+
+{"message": ""}
+```
+
 
 ### System Clock
 
 In order to correctly check for the expiration times of the Approov tokens is very important that the backend server is synchronizing automatically the system clock over the network with an authoritative time source. In Linux this is usually done with a NTP server.
-
 
 ## Issues
 
@@ -162,3 +157,31 @@ If you wish to explore the Approov solution in more depth, then why not try one 
 * [Approov Support](https://approov.io/contact)
 * [About Us](https://approov.io/company)
 * [Contact Us](https://approov.io/contact)
+
+
+## Tree 
+
+```bash
+$ tree .
+.
+├── server
+│   │── scripts
+│   │    │── prep.sh
+│   │    └── tests.sh
+│   │
+│   ├── .env.example
+│   ├── docker_run.sh
+│   ├── hello_server_protected.py
+│   ├── run.sh
+│   ├── requirements.txt
+│   └── README.md
+│  
+│── docs/
+│   └── APPROOV_MESSAGE_SIGNATURE_QUICKSTART.md
+│
+├── .gitignore
+├── Dockerfile  
+├── docker-compose.yml   
+└── OVERVIEW.md
+└── README.md
+```
