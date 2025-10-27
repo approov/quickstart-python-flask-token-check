@@ -1,9 +1,8 @@
 from __future__ import annotations
-from typing import Optional, Tuple, List, Iterable
-
 from flask import abort, current_app, Flask, make_response, request
-from functools import wraps
 
+from typing import Optional, Tuple, List, Iterable
+from functools import wraps
 import base64
 import hashlib
 import jwt
@@ -12,12 +11,15 @@ import os
 
 # ---- Configuration ----
 
+
+from dotenv import load_dotenv
+load_dotenv()
+
 DEFAULTS = {
-    "APPROOV_ENABLED": os.environ.get(
-        "APPROOV_ENABLED", True  # set to False to disable Approov
-    ).lower() in ('true', '1', 't'),
-    "APPROOV_SECRET_BASE64": os.environ.get("APPROOV_SECRET_BASE64"),
-    "APPROOV_TOKEN_HEADER": os.environ.get(
+    # initial Approov enabled/disabled state here:
+    "APPROOV_ENABLED": True,  # Set to False to disable Approov by default
+    "APPROOV_BASE64_SECRET": os.getenv("APPROOV_BASE64_SECRET"),
+    "APPROOV_TOKEN_HEADER": os.getenv(
         "APPROOV_TOKEN_HEADER", "Approov-Token"
     ),
 }
@@ -27,7 +29,7 @@ def init_approov(app) -> None:
     """
     Call once in your app factory or main module.
     Any missing keys get sensible defaults so the quickstart "just works".
-
+ 
     Parameters:
         app (flask.app.Flask):
             The Flask app to configure.
@@ -35,11 +37,11 @@ def init_approov(app) -> None:
     for k, v in DEFAULTS.items():
         print(k, v)
         app.config.setdefault(k, v)
-    if app.config.get("APPROOV_ENABLED", False):
+    if not app.config.get("APPROOV_ENABLED", False):
         app.logger.warning("[approov] protection explicitly disabled")
         return  # Approov is disabled, we don't need the secret
-    if not app.config.get("APPROOV_SECRET_BASE64"):
-        raise Exception("[approov] 'APPROOV_SECRET_BASE64' must be set")
+    if not app.config.get("APPROOV_BASE64_SECRET"):
+        raise Exception("[approov] 'APPROOV_BASE64_SECRET' must be set")
 
 
 # ---- Helpers ----
@@ -153,7 +155,7 @@ def approov(req, token_check: bool = True,
         try:
             claims = jwt.decode(
                 token,
-                base64.b64decode(current_app.config.get("APPROOV_SECRET_BASE64")),
+                base64.b64decode(current_app.config.get("APPROOV_BASE64_SECRET")),
                 algorithms=["HS256"],
                 options={
                     "verify_signature": True,   # Signature must be good
@@ -207,7 +209,7 @@ def require_approov(
     *,
     bound_headers: Optional[Iterable[str]] = None,
     message_signing: bool = False,
-    status_code: int = 403,
+    status_code: int = 401,
 ):
     """
     Drop-in decorator for protected endpoints.
@@ -301,6 +303,22 @@ def approov_state():
     if app.config.get("APPROOV_ENABLED"):
         return "OK", 200
     return "Not Implemented", 501
+
+# ---- Approov Enable/Disable Endpoints ----
+
+# Disable Approov protection
+@app.route("/approov-disable", methods=["POST"])
+def disable_approov():
+    app.config["APPROOV_ENABLED"] = False
+    app.logger.warning("[approov] protection explicitly disabled via API")
+    return "Approov protection disabled", 200
+
+# Enable Approov protection
+@app.route("/approov-enable", methods=["POST"])
+def enable_approov():
+    app.config["APPROOV_ENABLED"] = True
+    app.logger.info("[approov] protection enabled via API")
+    return "Approov protection enabled", 200
 
 
 # --- Main ---

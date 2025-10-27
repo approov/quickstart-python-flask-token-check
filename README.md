@@ -2,10 +2,18 @@
 
 [Approov](https://approov.io) is an API security solution used to verify that requests received by your backend services originate from trusted versions of your mobile apps.
 
-This repo implements the Approov server-side request verification code with the Python Flask framework in a simple Hello API server, which performs the verification check before allowing valid traffic to be processed by the API endpoint.
+This repo implements the Approov server-side request verification code with the Python Flask framework in a simple Approov API server, which performs the verification check before allowing valid traffic to be processed by the API endpoint.
 
-Originally this repo was just to show the Approov token integration example on a Python 3 Flask API as described in the article: [Approov Integration in a Python Flask API](https://approov.io/blog//approov-integration-in-a-python-flask-api), that you can still find at [/servers/shapes-api](/servers/shapes-api).
+The Python Flask API server is very simple and is defined in the file `/server/approov_protected_server.py`.
 
+Server example have:
+
+* Unprotected Server
+* Approov Protected Server - Token Check
+* Approov Protected Server - Token Binding Check
+* Approov Protected Server - Token Binding & Custom Header Check
+* Approov Protected Server - Token Message Signature
+* Approov Protected Server - Token Binding & Message Signature Check
 
 ## Approov Integration Quickstart
 
@@ -15,25 +23,15 @@ The quickstart was tested with the following Operating Systems:
 * MacOS Big Sur
 * Windows 10 WSL2 - Ubuntu 20.04
 
+
+### 1.Setup the Approov CLI
 First, setup the [Approov CLI](https://approov.io/docs/latest/approov-installation/index.html#initializing-the-approov-cli).
-
-Now, register the API domain for which Approov will issues tokens:
-
-```bash
-approov api -add api.example.com
-```
-
-> **NOTE:** By default a symmetric key (HS256) is used to sign the Approov token on a valid attestation of the mobile app for each API domain it's added with the Approov CLI, so that all APIs will share the same secret and the backend needs to take care to keep this secret secure.
->
-> A more secure alternative is to use asymmetric keys (RS256 or others) that allows for a different keyset to be used on each API domain and for the Approov token to be verified with a public key that can only verify, but not sign, Approov tokens.
->
-> To implement the asymmetric key you need to change from using the symmetric HS256 algorithm to an asymmetric algorithm, for example RS256, that requires you to first [add a new key](https://approov.io/docs/latest/approov-usage-documentation/#adding-a-new-key), and then specify it when [adding each API domain](https://approov.io/docs/latest/approov-usage-documentation/#keyset-key-api-addition). Please visit [Managing Key Sets](https://approov.io/docs/latest/approov-usage-documentation/#managing-key-sets) on the Approov documentation for more details.
 
 Next, enable your Approov `admin` role with:
 
 ```bash
-eval `approov role admin`
-````
+approov whoami
+```
 
 For the Windows powershell:
 
@@ -41,106 +39,140 @@ For the Windows powershell:
 set APPROOV_ROLE=admin:___YOUR_APPROOV_ACCOUNT_NAME_HERE___
 ```
 
+
+### 2.Ensure `example.com` is registered
+
+```bash
+approov api -add api.example.com
+```
+
+
+### 3. Generate Approov secret
 Now, get your Approov Secret with the [Approov CLI](https://approov.io/docs/latest/approov-installation/index.html#initializing-the-approov-cli):
 
 ```bash
 approov secret -get base64
 ```
 
-Next, add the [Approov secret](https://approov.io/docs/latest/approov-usage-documentation/#account-secret-key-export) to your project `.env` file:
-
-```env
-APPROOV_BASE64_SECRET=approov_base64_secret_here
-```
-
-Now, add to your `requirements.txt` file the [JWT dependency](https://github.com/jpadilla/pyjwt/):
+Next, add the [Approov secret](https://approov.io/docs/latest/approov-usage-documentation/#account-secret-key-export) to your project `server/.env` file:
 
 ```bash
-PyJWT==1.7.1 # update the version to the latest one
+cp -n .env.example .env
 ```
 
-Next, you need to install the dependencies:
+
+### 5.  Install the dependencies and run the server
+Run the server with Approov enabled by default:
 
 ```bash
-pip3 install -r requirements.txt
+cd server/
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python approov_protected_server.py
 ```
 
-Now, add this code to your project, just before your first API endpoint:
+#### Run with Approov disabled
 
-```python
-from flask import Flask, jsonify, request, abort, g, make_response
+Disable Approov by setting the `APPROOV_ENABLED` variable to `False` inside the `server/approov_protected_server.py` file or by running the endpoint below:
 
-# @link https://github.com/jpadilla/pyjwt/
-import jwt
-import base64
-import hashlib
-
-# @link https://github.com/theskumar/python-dotenv
-from dotenv import load_dotenv, find_dotenv
-load_dotenv(find_dotenv(), override=True)
-from os import getenv
-
-api = Flask(__name__)
-
-# Token secret value obtained with the Approov CLI tool:
-#  - approov secret -get
-approov_base64_secret = getenv('APPROOV_BASE64_SECRET')
-
-if approov_base64_secret == None:
-    raise ValueError("Missing the value for environment variable: APPROOV_BASE64_SECRET")
-
-APPROOV_SECRET = base64.b64decode(approov_base64_secret)
-
-@api.before_request
-def _verifyApproovToken():
-    approov_token = request.headers.get("Approov-Token")
-
-    # If we didn't find a token, then reject the request.
-    if approov_token is None or approov_token == "":
-        # You may want to add some logging here.
-        return abort(make_response({}, 401))
-
-    try:
-        # Decode the Approov token explicitly with the HS256 algorithm to
-        # avoid the algorithm None attack.
-        g.approov_token_claims = jwt.decode(approov_token, APPROOV_SECRET, algorithms=['HS256'])
-
-        # When doesn't occur an exception we have a valid Aproov Token
-
-    except jwt.ExpiredSignatureError as e:
-        # You may want to add some logging here.
-        return abort(make_response({}, 401))
-
-    except jwt.InvalidTokenError as e:
-        # You may want to add some logging here.
-        return abort(make_response({}, 401))
-
-    except:
-        return abort(make_response({}, 401))
-
-
-#@api.route("/")
-#def hello():
-#    return jsonify({"message": "Hello World"})
+```bash
+curl -X POST http://localhost:8080/approov-disable
 ```
 
-> **NOTE:** When the Approov token validation fails we return a `401` with an empty body, because we don't want to give clues to an attacker about the reason the request failed, and you can go even further by returning a `400`.
 
-Using the `before_request` decorator approach will ensure that all endpoints in your API will be protected by Approov.
+```text
+APPROOV_ENABLED = os.getenv('APPROOV_ENABLED', 'False') == 'False'
+```
 
-Not enough details in the bare bones quickstart? No worries, check the [detailed quickstarts](QUICKSTARTS.md) that contain a more comprehensive set of instructions, including how to test the Approov integration.
+To enable Approov again, just set the `APPROOV_ENABLED` variable to `True` inside the `server/approov_protected_server.py` file or by running the endpoint below:
+
+```bash
+curl -X POST http://localhost:8080/approov-enable
+```
+
+### 6. Test the server automatically
+
+Now, you can run automated tests from the `/server` folder with:
+
+```bash
+ch.       c
+./tests.sh
+```
+
+Log file with all tests results can be found in `server/.config/logs/`.
+
+
+### 7. Test the server manually
+You can also test the server manually with the following commands:
+
+#### 0 - Unprotected
+`curl http://localhost:8080/unprotected`
+
+### 1 - Protected
+
+##### 1.1 - Valid Token
+```bash
+approov token -genExample example.com > .config/approov_token_1_valid
+curl -H "approov-token: $(cat .config/approov_token_1_valid)" http://localhost:8080/token-check
+```
+
+##### 1.2 - Invalid Token
+```bash
+approov token -genExample example.com -type invalid > .config/approov_token_1_invalid
+curl -H "approov-token: $(cat .config/approov_token_1_invalid)" http://localhost:8080/token-check
+```
+
+#### 2 - Token Binding ["Authorization"]
+
+##### 2.1 - Valid Token
+```bash
+export HASH_INPUT="ExampleAuthToken=="
+approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com > .config/approov_token_2_valid
+curl -H "Authorization: ExampleAuthToken==" -H "approov-token: $(cat .config/approov_token_2_valid)" http://localhost:8080/token-binding-1
+```
+
+##### 2.2 - Missing Header
+`curl -H "approov-token: $(cat .config/approov_token_2_valid)" http://localhost:8080/token-binding-1`
+
+##### 2.3 - Incorrect Header
+`curl -H "Authorization: BadAuthToken==" -H "approov-token: $(cat .config/approov_token_2_valid)" http://localhost:8080/token-binding-1`
+
+##### 2.4 - Invalid Token
+```bash
+approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com -type invalid > .config/approov_token_2_invalid
+curl -H "Authorization: ExampleAuthToken==" -H "approov-token: $(cat .config/approov_token_2_invalid)" http://localhost:8080/token-binding-1
+```
+
+#### 3 - Token Binding ["Authorization", "Message-Digest"]
+
+##### 3.1 - Valid Token
+```bash
+export HASH_INPUT="ExampleAuthToken==ContentDigest=="
+approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com > .config/approov_token_3_valid
+curl -H "Authorization: ExampleAuthToken==" -H "Content-Digest: ContentDigest==" -H "approov-token: $(cat .config/approov_token_3_valid)" http://localhost:8080/token-binding-3
+```
+
+##### 3.2 - Missing Header
+```bash
+curl -H "approov-token: $(cat .config/approov_token_3_valid)" http://localhost:8080/token-binding-3
+```
+
+###### 3.3 - Incorrect Header
+```bash
+curl -H "Authorization: BadAuthToken==" -H "Content-Digest: BadContentDigest==" -H "approov-token: $(cat .config/approov_token_3_valid)" http://localhost:8080/token-binding-3
+```
+
+##### 3.4 - Invalid Token 
+```bash
+approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com -type invalid > .config/approov_token_3_invalid
+curl -H "Authorization: ExampleAuthToken==" -H "Content-Digest: ContentDigest==" -H "approov-token: $(cat .config/approov_token_3_invalid)" http://localhost:8080/token-binding-3
+```
 
 
 ## More Information
 
-* [Approov Overview](OVERVIEW.md)
-* [Detailed Quickstarts](QUICKSTARTS.md)
-* [Examples](EXAMPLES.md)
-* [Testing](TESTING.md)
-
-### System Clock
-
-In order to correctly check for the expiration times of the Approov tokens is very important that the backend server is synchronizing automatically the system clock over the network with an authoritative time source. In Linux this is usually done with a NTP server.
+* [Approov Docs Flask API](docs/APPROOV_TOKEN_CHECK_QUICKSTART.md)
 
 
 ## Issues

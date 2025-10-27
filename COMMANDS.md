@@ -28,8 +28,8 @@ python approov_protected_server.py
 
 ## 1.1 - Valid Token
 ```
-approov token -genExample example.com > .tokens/approov_token_1_valid
-curl -H "approov-token: $(cat .tokens/approov_token_1_valid)" http://localhost:8080/token-check
+approov token -genExample example.com > .config/approov_token_1_valid
+curl -H "approov-token: $(cat .config/approov_token_1_valid)" http://localhost:8080/token-check
 ```
 
 ## 1.2 - Invalid Token
@@ -43,7 +43,7 @@ curl -H "approov-token: $(cat .tokens/approov_token_1_invalid)" http://localhost
 ## 2.1 - Valid Token
 ```
 export HASH_INPUT="ExampleAuthToken=="
-approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com > .tokens/approov_token_2_valid
+approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com > .config/approov_token_2_valid
 curl -H "Authorization: ExampleAuthToken==" -H "approov-token: $(cat .tokens/approov_token_2_valid)" http://localhost:8080/token-binding-1
 ```
 
@@ -64,14 +64,24 @@ curl -H "Authorization: ExampleAuthToken==" -H "approov-token: $(cat .tokens/app
 ## 3.1 - Valid Token
 ```
 export HASH_INPUT="ExampleAuthToken==ContentDigest=="
-approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com > .tokens/approov_token_3_valid
-curl -H "Authorization: ExampleAuthToken==" -H "Content-Digest: ContentDigest==" -H "approov-token: $(cat .tokens/approov_token_3_valid)" http://localhost:8080/token-binding-2
+approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com > .config/approov_token_3_valid
+curl -H "Authorization: ExampleAuthToken==" -H "Content-Digest: ContentDigest==" -H "approov-token: $(cat .config/approov_token_3_valid)" http://localhost:8080/token-binding-2
 ```
 
-## 3.2 ...
+## 3.2 - Missing Header
+```
+curl -H "approov-token: $(cat .tokens/approov_token_3_valid)" http://localhost:8080/token-binding-2
+```
 
-# 4 - Message Signing
-...
+## 3.3 - Incorrect Header
+```
+curl -H "Authorization: BadAuthToken==" -H "Content-Digest: BadContentDigest==" -H "approov-token: $(cat .tokens/approov_token_2_valid)" http://localhost:8080/token-binding-2
+```
 
-# 5 - Message Signing + Token Binding ["Authorization"]
-...
+## 3.4 - Invalid Token 
+```
+approov token -setDataHashInToken "$HASH_INPUT" -genExample example.com -type invalid > .tokens/approov_token_3_invalid
+curl -H "Authorization: ExampleAuthToken==" -H "Content-Digest: ContentDigest==" -H "approov-token: $(cat .tokens/approov_token_2_invalid)" http://localhost:8080/token-binding-2
+```
+
+
