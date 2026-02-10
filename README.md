@@ -238,9 +238,9 @@ curl -X GET http://localhost:8080/approov-state       # check current state
 
 **Environments where the quickstart was tested:**
 ```text
-* Runtime: Python 3.9.6
+* Runtime: Python 3.12.12
 * Framework: Flask 3.1.2
-* Build Tool: pip 25.3
+* Build Tool: pip 26.0.1 
 ```
 
 If you encounter any problems while following this guide, or have any other concerns, please let us know by opening an issue [here](https://github.com/approov/quickstart-java-spring-token-check/issues) and we will be happy to assist you.
