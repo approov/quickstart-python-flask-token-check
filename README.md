@@ -1,4 +1,4 @@
-# Approov Backend Quickstart - {{LANGUAGE}} {{FRAMEWORK}}
+# Approov Backend Quickstart - Python Flask
 
 This project provides a server-side example of Approov token verification for a protected backend API. It exposes a simple API that verifies Approov tokens before granting access to protected endpoints and demonstrates how the endpoints behave under the current Approov configuration:
 
@@ -7,26 +7,21 @@ This project provides a server-side example of Approov token verification for a 
  - `/token-binding` - requires a valid Approov token which is bound to a header value.
  - `/token-double-binding` - requires a valid Approov token which is bound to two header values.
 
-In this example, Approov token check is implemented in `ApproovApplication.extension`. The responsibilities break down as follows:
+In this example, Approov token verification is implemented in `ApproovApplication.py`. Responsibilities are split as follows:
 
+1. **Approov JWT validation (signature + expiration)** is implemented in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L141-L203), with decode/expiration checks in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L158-L174).  
+It uses `jwt.decode(..., algorithms=["HS256"])` and requires the `exp` claim.
 
-## Mandatory Approov logic mapping
+2. **Token binding (`pay` + hash)** is handled in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L176-L192), hash helper [_sha256_b64url_from_str()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L107-L109), and comparator [_binding_matches()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L112-L115).  
+It computes `base64url(sha256(binding_value))` and compares it with `pay`.
 
-1. **JWT Approov Token validation (signature + expiry)** is implemented in [`approov()`](./app.py#L135-L197), specifically decode/expiry checks in [`approov()`](./app.py#L152-L168).  
-   It uses `jwt.decode(..., algorithms=["HS256"])` and requires `exp`.
+3. **Decorator enforcement** is implemented in [require_approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L206-L242).  
+Missing or invalid token/binding returns `401 Unauthorized`.
 
-2. **Token binding (pay + hash)** is handled in [`approov()`](./app.py#L170-L185), hash helper [`_sha256_b64url_from_str()`](./app.py#L104-L106), and comparator [`_binding_matches()`](./app.py#L109-L112).  
-   It computes `base64url(sha256(binding_value))` and compares to `pay`.
+4. **Binding-value construction (what gets hashed)** is in [_build_token_binding_string()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L91-L104).  
+It reads an ordered `bound_headers` list and concatenates header values in that exact order.
 
-3. **Middleware enforcement** is done in [`approov_middleware_enforcement()`](./app.py#L300-L330).  
-   Missing/invalid token or binding returns `401 Unauthorized`.
-
-4. **Binding value selection (what gets hashed)** is in [`_build_token_binding_string()`](./app.py#L88-L101).  
-   It takes an ordered `bound_headers` list and concatenates header values in that exact order.
-
-5. **Protected route requirements** are defined in [`PROTECTED_ROUTES`](./app.py#L28-L32) and required-header computation in [`_required_headers_for_request()`](./app.py#L129-L132).
-
-6. **Protected routes are registered** in route definitions in [`create_app()`](./app.py#L337-L396), while enforcement remains middleware-driven.
+5. **Protected route requirements** are defined directly on route handlers via decorators in [create_app()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L307-L382), and required-header computation is in [_required_headers_for_request()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L128-L132).
 
 ## Approov Token Verification Flow
 

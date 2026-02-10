@@ -24,12 +24,10 @@ APPROOV_HEADER = "Approov-Token"
 AUTH_HEADER = "Authorization"
 SESSION_ID_HEADER = "SessionId"
 PLACEHOLDER_SECRET = "approov_base64url_secret_here"
-
-PROTECTED_ROUTES: dict[str, list[str]] = {
-    "/token-check": [],
-    "/token-binding": [AUTH_HEADER],
-    "/token-double-binding": [AUTH_HEADER, SESSION_ID_HEADER],
-}
+APPROOV_ENABLED_KEY = "APPROOV_ENABLED"
+TOKEN_BINDING_ENABLED_KEY = "TOKEN_BINDING_ENABLED"
+APPROOV_TOKEN_HEADER_KEY = "APPROOV_TOKEN_HEADER"
+APPROOV_SECRET_KEY = "APPROOV_SECRET"
 
 
 def configure_logging() -> None:
@@ -79,14 +77,14 @@ def load_approov_secret() -> bytes:
 
 
 def init_approov(app: Flask) -> None:
-    app.config["APPROOV_ENABLED"] = True
-    app.config["TOKEN_BINDING_ENABLED"] = True
-    app.config["APPROOV_TOKEN_HEADER"] = APPROOV_HEADER
-    app.config["APPROOV_SECRET"] = load_approov_secret()
+    app.config[APPROOV_ENABLED_KEY] = True
+    app.config[TOKEN_BINDING_ENABLED_KEY] = True
+    app.config[APPROOV_TOKEN_HEADER_KEY] = APPROOV_HEADER
+    app.config[APPROOV_SECRET_KEY] = load_approov_secret()
 
 
 def _get_approov_token_from_request(req: Request) -> Optional[str]:
-    target_header = current_app.config.get("APPROOV_TOKEN_HEADER", APPROOV_HEADER)
+    target_header = current_app.config.get(APPROOV_TOKEN_HEADER_KEY, APPROOV_HEADER)
     return req.headers.get(target_header)
 
 
@@ -127,14 +125,17 @@ def _summarize_error(error: str) -> str:
     return "token_verification_failed"
 
 
-def _binding_headers_for_path(path: str) -> list[str]:
-    return PROTECTED_ROUTES.get(path, [])
-
-
 def _required_headers_for_request(bound_headers: list[str]) -> list[str]:
-    if (not current_app.config["TOKEN_BINDING_ENABLED"]) or (not bound_headers):
-        return [APPROOV_HEADER]
-    return [APPROOV_HEADER, *bound_headers]
+    approov_header = str(current_app.config.get(APPROOV_TOKEN_HEADER_KEY, APPROOV_HEADER))
+    if (not current_app.config[TOKEN_BINDING_ENABLED_KEY]) or (not bound_headers):
+        return [approov_header]
+    return [approov_header, *bound_headers]
+
+
+def _unauthorized_response(error: str) -> tuple[Response, int]:
+    g.approov_summary = f"approov_failed:{_summarize_error(error)}"
+    g.approov_error = error
+    return jsonify({"message": "Unauthorized"}), 401
 
 
 def approov(
@@ -143,7 +144,7 @@ def approov(
     bound_headers: Optional[list[str]] = None,
     message_signing: bool = False,
 ) -> Optional[str]:
-    if not token_check or not current_app.config["APPROOV_ENABLED"]:
+    if not token_check or not current_app.config[APPROOV_ENABLED_KEY]:
         current_app.logger.warning("[approov] endpoint protection is disabled")
         g.approov_claims = {}
         return None
@@ -151,13 +152,13 @@ def approov(
     token = _get_approov_token_from_request(req)
     if not _has_text(token):
         return (
-            f"[approov] missing {current_app.config.get('APPROOV_TOKEN_HEADER')} header"
+            f"[approov] missing {current_app.config.get(APPROOV_TOKEN_HEADER_KEY, APPROOV_HEADER)} header"
         )
 
     try:
         claims = jwt.decode(
             token.strip(),
-            current_app.config["APPROOV_SECRET"],
+            current_app.config[APPROOV_SECRET_KEY],
             algorithms=["HS256"],
             options={
                 "require": ["exp"],
@@ -174,7 +175,7 @@ def approov(
 
     if bound_headers:
         pay_claim = claims.get("pay")
-        if not _has_text(str(pay_claim) if pay_claim is not None else None):
+        if pay_claim is None or (isinstance(pay_claim, str) and not _has_text(pay_claim)):
             return "[approov] token does not have a 'pay' claim"
         if not isinstance(pay_claim, str):
             return "[approov] token does not have a valid 'pay' claim"
@@ -207,19 +208,32 @@ def require_approov(
     bound_headers: Optional[Iterable[str]] = None,
     message_signing: bool = False,
 ):
+    configured_bound_headers = list(bound_headers or [])
+
     def _decorator(function):
         @wraps(function)
         def _wrapped(*args: Any, **kwargs: Any):
+            g.approov_error = None
+            g.required_headers = _required_headers_for_request(configured_bound_headers)
+
+            if not current_app.config[APPROOV_ENABLED_KEY]:
+                g.approov_summary = "approov_disabled"
+                g.approov_claims = {}
+                return function(*args, **kwargs)
+
+            active_bound_headers = (
+                configured_bound_headers
+                if current_app.config[TOKEN_BINDING_ENABLED_KEY]
+                else []
+            )
             error = approov(
                 request,
                 token_check=True,
-                bound_headers=list(bound_headers or []),
+                bound_headers=active_bound_headers,
                 message_signing=message_signing,
             )
             if error is not None:
-                g.approov_summary = f"approov_failed:{_summarize_error(error)}"
-                g.approov_error = error
-                return jsonify({"message": "Unauthorized"}), 401
+                return _unauthorized_response(error)
             g.approov_summary = "approov_ok"
             return function(*args, **kwargs)
 
@@ -230,8 +244,8 @@ def require_approov(
 
 def state_payload() -> dict[str, Any]:
     return {
-        "approovEnabled": bool(current_app.config["APPROOV_ENABLED"]),
-        "tokenBindingEnabled": bool(current_app.config["TOKEN_BINDING_ENABLED"]),
+        "approovEnabled": bool(current_app.config[APPROOV_ENABLED_KEY]),
+        "tokenBindingEnabled": bool(current_app.config[TOKEN_BINDING_ENABLED_KEY]),
     }
 
 
@@ -266,30 +280,23 @@ def _log_http_request_completed(response: Response) -> None:
     if response.status_code == 401 and summary == "approov_ok":
         summary = "approov_failed:downstream_unauthorized"
 
-    method = request.method
-    path = request.path
-    ip = request.remote_addr or ""
-    port = _request_server_port()
-    flags = {
-        "approovEnabled": bool(current_app.config["APPROOV_ENABLED"]),
-        "tokenBindingEnabled": bool(current_app.config["TOKEN_BINDING_ENABLED"]),
+    payload = {
+        "summary": summary,
+        "method": request.method,
+        "path": request.path,
+        "status": response.status_code,
+        "ip": request.remote_addr or "",
+        "port": _request_server_port(),
+        "approovEnabled": bool(current_app.config[APPROOV_ENABLED_KEY]),
+        "tokenBindingEnabled": bool(current_app.config[TOKEN_BINDING_ENABLED_KEY]),
+        "required_headers": required_headers,
     }
-
-    message = (
-        "http.request.completed "
-        f"\"summary\":\"{summary}\","
-        f"\"method\":\"{method}\","
-        f"\"path\":\"{path}\","
-        f"\"status\":{response.status_code},"
-        f"\"ip\":\"{ip}\","
-        f"\"port\":{port}, "
-        f"{json.dumps(flags, separators=(',', ':'))} "
-        f"\"required_headers\":{json.dumps(required_headers, separators=(',', ':'))}"
-    )
 
     error = getattr(g, "approov_error", None)
     if error:
-        message += f" \"error\":\"{error}\""
+        payload["error"] = error
+
+    message = "http.request.completed " + json.dumps(payload, separators=(",", ":"))
 
     if response.status_code == 401:
         current_app.logger.warning(message)
@@ -302,39 +309,6 @@ def create_app() -> Flask:
     configure_logging()
     app = Flask(__name__)
     init_approov(app)
-
-    @app.before_request
-    def approov_middleware_enforcement():
-        g.required_headers = []
-        g.approov_error = None
-
-        path = request.path
-        if path not in PROTECTED_ROUTES:
-            return None
-
-        binding_headers = _binding_headers_for_path(path)
-        g.required_headers = _required_headers_for_request(binding_headers)
-
-        if not app.config["APPROOV_ENABLED"]:
-            g.approov_summary = "approov_disabled"
-            return None
-
-        active_binding_headers = (
-            binding_headers if app.config["TOKEN_BINDING_ENABLED"] else []
-        )
-        error = approov(
-            request,
-            token_check=True,
-            bound_headers=active_binding_headers,
-            message_signing=False,
-        )
-        if error is not None:
-            g.approov_summary = f"approov_failed:{_summarize_error(error)}"
-            g.approov_error = error
-            return jsonify({"message": "Unauthorized"}), 401
-
-        g.approov_summary = "approov_ok"
-        return None
 
     @app.after_request
     def emit_request_log(response: Response):
@@ -351,24 +325,24 @@ def create_app() -> Flask:
 
     @app.post("/approov/enable")
     def enable_approov_endpoint():
-        app.config["APPROOV_ENABLED"] = True
-        app.config["TOKEN_BINDING_ENABLED"] = True
+        app.config[APPROOV_ENABLED_KEY] = True
+        app.config[TOKEN_BINDING_ENABLED_KEY] = True
         return jsonify(state_payload()), 200
 
     @app.post("/approov/disable")
     def disable_approov_endpoint():
-        app.config["APPROOV_ENABLED"] = False
-        app.config["TOKEN_BINDING_ENABLED"] = False
+        app.config[APPROOV_ENABLED_KEY] = False
+        app.config[TOKEN_BINDING_ENABLED_KEY] = False
         return jsonify(state_payload()), 200
 
     @app.post("/token-binding/enable")
     def enable_token_binding_endpoint():
-        app.config["TOKEN_BINDING_ENABLED"] = True
+        app.config[TOKEN_BINDING_ENABLED_KEY] = True
         return jsonify(state_payload()), 200
 
     @app.post("/token-binding/disable")
     def disable_token_binding_endpoint():
-        app.config["TOKEN_BINDING_ENABLED"] = False
+        app.config[TOKEN_BINDING_ENABLED_KEY] = False
         return jsonify(state_payload()), 200
 
     @app.get("/unprotected")
@@ -380,12 +354,14 @@ def create_app() -> Flask:
         ), 200
 
     @app.get("/token-check")
+    @require_approov()
     def token_check():
         return jsonify(
             info_payload("Protected endpoint '/token-check'; Approov token verified.")
         ), 200
 
     @app.get("/token-binding")
+    @require_approov(bound_headers=[AUTH_HEADER])
     def token_binding():
         response = info_payload(
             "Protected endpoint '/token-binding'; Approov token binding enforced."
@@ -394,6 +370,7 @@ def create_app() -> Flask:
         return jsonify(response), 200
 
     @app.get("/token-double-binding")
+    @require_approov(bound_headers=[AUTH_HEADER, SESSION_ID_HEADER])
     def token_double_binding():
         response = info_payload(
             "Protected endpoint '/token-double-binding'; dual token binding enforced."
