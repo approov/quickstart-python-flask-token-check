@@ -243,7 +243,7 @@ curl -X GET http://localhost:8080/approov-state       # check current state
 * Build Tool: pip 26.0.1 
 ```
 
-If you encounter any problems while following this guide, or have any other concerns, please let us know by opening an issue [here](https://github.com/approov/quickstart-java-spring-token-check/issues) and we will be happy to assist you.
+If you encounter any problems while following this guide, or have any other concerns, please let us know by opening an issue [here](https://github.com/approov/quickstart-python-flask-token-check/issues) and we will be happy to assist you.
 
 ## Useful Links
 
