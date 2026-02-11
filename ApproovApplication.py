@@ -142,7 +142,6 @@ def approov(
     req: Request,
     token_check: bool = True,
     bound_headers: Optional[list[str]] = None,
-    message_signing: bool = False,
 ) -> Optional[str]:
     if not token_check or not current_app.config[APPROOV_ENABLED_KEY]:
         current_app.logger.warning("[approov] endpoint protection is disabled")
@@ -195,9 +194,6 @@ def approov(
             "[approov] token binding verification successful for %s", bound_headers
         )
 
-    if message_signing:
-        return "[approov] message signing not implemented"
-
     g.approov_claims = claims
     current_app.logger.debug("[approov] token verification successful")
     return None
@@ -206,7 +202,6 @@ def approov(
 def require_approov(
     *,
     bound_headers: Optional[Iterable[str]] = None,
-    message_signing: bool = False,
 ):
     configured_bound_headers = list(bound_headers or [])
 
@@ -230,7 +225,6 @@ def require_approov(
                 request,
                 token_check=True,
                 bound_headers=active_bound_headers,
-                message_signing=message_signing,
             )
             if error is not None:
                 return _unauthorized_response(error)
