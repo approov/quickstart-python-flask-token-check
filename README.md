@@ -9,7 +9,7 @@ This project provides a server-side example of Approov token verification for a 
 
 In this example, Approov token verification is implemented in `ApproovApplication.py`. Responsibilities are split as follows:
 
-1. **Approov JWT validation (signature + expiration)** is implemented in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L141-L199), with decode/expiration checks in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L158-L173).  
+1. **Approov JWT validation (signature + expiration)** is in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L141-L199), with decode/expiration checks in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L158-L173).  
 It uses `jwt.decode(..., algorithms=["HS256"])` and requires the `exp` claim.
 
 2. **Token binding (`pay` + hash)** is handled in [approov()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L175-L195), hash helper [_sha256_b64url_from_str()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L107-L109), and comparator [_binding_matches()](https://github.com/approov/quickstart-python-flask-token-check/blob/refactor/python-flask-quickstart/ApproovApplication.py#L112-L115).  
